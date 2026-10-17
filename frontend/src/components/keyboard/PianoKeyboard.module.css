@@ -1,0 +1,71 @@
+.keyboard {
+  position: relative;
+  height: 132px;
+  width: 100%;
+  user-select: none;
+  border-radius: 0 0 var(--radius) var(--radius);
+  background: #0b0b0c;
+  padding-top: 4px;
+  touch-action: manipulation;
+}
+
+.key {
+  position: absolute;
+  top: 4px;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  padding-bottom: 6px;
+  transition: background 90ms, transform 90ms;
+}
+
+.white {
+  height: calc(100% - 4px);
+  background: linear-gradient(#e9e7e1, #d9d6ce);
+  border: 1px solid #0b0b0c;
+  border-top: none;
+  border-radius: 0 0 4px 4px;
+  z-index: 1;
+}
+.white:hover { background: linear-gradient(#f3f1ec, #e2dfd8); }
+
+.black {
+  height: 60%;
+  background: linear-gradient(#2a2b2e, #151618);
+  border: 1px solid #070708;
+  border-top: none;
+  border-radius: 0 0 3px 3px;
+  z-index: 2;
+}
+.black:hover { background: linear-gradient(#36383c, #1e1f22); }
+
+.label {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 600;
+  pointer-events: none;
+  color: #6b6a66;
+}
+.black .label { color: #b9b7b1; }
+
+/* chord tones: teal; root: amber. Colour plus a marker bar so the role is not conveyed by colour alone. */
+.white.tone { background: linear-gradient(#bfe3da, #8fcabd); }
+.white.root { background: linear-gradient(#f4d39b, #e3a94b); }
+.black.tone { background: linear-gradient(#5aa999, #3c7f72); }
+.black.root { background: linear-gradient(#e6b15b, #b37f2a); }
+.tone .label, .root .label { color: #121314; }
+.black.tone .label, .black.root .label { color: #0f1011; }
+.root::after {
+  content: '';
+  position: absolute;
+  top: 6px;
+  left: 50%;
+  width: 6px;
+  height: 6px;
+  margin-left: -3px;
+  border-radius: 50%;
+  background: #1b1408;
+}
+
+.sounding { transform: translateY(2px); filter: brightness(1.12); }
+.white.sounding:not(.tone):not(.root) { background: linear-gradient(#d7d3c8, #c7c2b5); }

@@ -1,0 +1,45 @@
+.region {
+  position: fixed;
+  right: 16px;
+  bottom: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  z-index: 50;
+  max-width: min(420px, calc(100vw - 32px));
+}
+
+.toast {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 10px 12px;
+  background: var(--surface-3);
+  border: 1px solid var(--border-strong);
+  border-left-width: 3px;
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  font-size: 13px;
+  animation: slide-in 160ms ease-out;
+}
+
+.success { border-left-color: var(--success); }
+.success svg:first-child { color: var(--success); }
+.error { border-left-color: var(--danger); }
+.error svg:first-child { color: var(--danger); }
+.info { border-left-color: var(--accent); }
+.info svg:first-child { color: var(--accent); }
+
+.message { flex: 1; line-height: 1.4; }
+
+.close {
+  color: var(--text-faint);
+  padding: 2px;
+  border-radius: 4px;
+}
+.close:hover { color: var(--text); }
+
+@keyframes slide-in {
+  from { transform: translateY(6px); opacity: 0; }
+  to { transform: none; opacity: 1; }
+}

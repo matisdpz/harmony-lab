@@ -1,0 +1,96 @@
+.page { display: flex; flex-direction: column; gap: 18px; padding: 22px 28px 40px; max-width: 1280px; }
+
+.pageHeader { display: flex; align-items: flex-end; justify-content: space-between; gap: 16px; flex-wrap: wrap; }
+.pageHeader h1 { font-size: 22px; font-weight: 650; letter-spacing: -0.01em; }
+.lead { color: var(--text-muted); font-size: 13px; line-height: 1.5; margin-top: 4px; }
+.dim { color: var(--text-faint); font-size: 12px; }
+
+.controlsRow { display: flex; align-items: flex-end; gap: 12px; flex-wrap: wrap; }
+
+.twoColumn { display: grid; grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr); gap: 16px; }
+
+.card { padding: 16px; display: flex; flex-direction: column; gap: 12px; min-width: 0; }
+.cardHeader { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+.cardTitle { font-size: 15px; font-weight: 600; }
+.bigSymbol { font-size: 34px; font-weight: 650; letter-spacing: -0.02em; line-height: 1.1; }
+.actions { display: flex; gap: 6px; flex-wrap: wrap; }
+
+.ladder { display: grid; grid-template-columns: repeat(15, 1fr); gap: 2px; }
+.ladder span {
+  height: 26px;
+  display: grid;
+  place-items: center;
+  border-radius: 3px;
+  background: var(--surface-3);
+  font-size: 10px;
+  font-family: var(--font-mono);
+  color: #121314;
+}
+.ladder .ladderRoot { background: var(--accent); font-weight: 700; }
+.ladder .ladderTone { background: var(--tone); font-weight: 700; }
+
+.table { width: 100%; border-collapse: collapse; font-size: 13px; }
+.table th { text-align: left; font-size: 10px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--text-faint); padding: 0 8px 6px 0; font-weight: 600; }
+.table td { padding: 6px 8px 6px 0; border-top: 1px solid var(--border); vertical-align: top; }
+
+.inversions { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 8px; }
+.inversion {
+  width: 100%;
+  text-align: left;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 10px;
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
+  background: var(--surface-2);
+  font-size: 12px;
+}
+.inversion:hover { border-color: var(--border-strong); }
+.inversionActive { border-color: var(--accent); }
+.inversionSymbol { font-size: 16px; font-weight: 650; }
+
+.relation { display: flex; flex-direction: column; gap: 6px; }
+.badgeRow { display: flex; gap: 6px; flex-wrap: wrap; }
+
+.diatonic { display: flex; flex-direction: column; gap: 6px; }
+.diatonicRow { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 4px; }
+.diatonicChord {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+  padding: 6px 8px;
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
+  background: var(--surface-2);
+  font-size: 12px;
+  min-width: 0;
+  text-align: left;
+}
+.diatonicChord:hover { border-color: var(--border-strong); background: var(--surface-3); }
+.diatonicChord span.mono { color: var(--tone); font-size: 11px; }
+.diatonicChord strong { font-size: 13px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
+
+.candidates { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 8px; }
+
+.section { display: flex; flex-direction: column; gap: 10px; }
+.sectionTitle { font-size: 15px; font-weight: 600; }
+.metricsGrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 8px; }
+.metric { padding: 10px 12px; }
+.metricValue { display: block; font-family: var(--font-mono); font-size: 20px; font-weight: 600; }
+.metricLabel { font-size: 11px; color: var(--text-faint); }
+.tableWrap { overflow-x: auto; }
+.observations { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px; font-size: 13px; line-height: 1.5; }
+.observations li { display: flex; gap: 8px; align-items: flex-start; }
+.warn { color: #efc5c1; }
+.chromatic { color: var(--accent); }
+.diatonicLabel { color: var(--tone); }
+
+@media (max-width: 1000px) {
+  .twoColumn { grid-template-columns: minmax(0, 1fr); }
+}
+@media (max-width: 640px) {
+  .page { padding: 16px; }
+  .diatonicRow { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+}

@@ -1,0 +1,39 @@
+spring:
+  application:
+    name: harmony-lab
+  datasource:
+    url: ${DB_URL:jdbc:postgresql://localhost:5432/harmonylab}
+    username: ${DB_USERNAME:harmonylab}
+    # Local development default only; set DB_PASSWORD in any shared environment.
+    password: ${DB_PASSWORD:harmonylab}
+    hikari:
+      # Fail fast (and report 503) when the database is unreachable instead of hanging for 30 s.
+      connection-timeout: 5000
+  jpa:
+    open-in-view: false
+    hibernate:
+      # The schema is owned by Flyway migrations; Hibernate only checks that the mapping matches.
+      ddl-auto: validate
+  flyway:
+    enabled: true
+    locations: classpath:db/migration
+
+server:
+  port: ${SERVER_PORT:8081}
+  error:
+    include-stacktrace: never
+    include-message: never
+
+app:
+  cors:
+    allowed-origins: ${APP_CORS_ALLOWED_ORIGINS:http://localhost:5173}
+
+springdoc:
+  api-docs:
+    path: /v3/api-docs
+  swagger-ui:
+    path: /swagger-ui.html
+
+logging:
+  level:
+    com.harmonylab: INFO

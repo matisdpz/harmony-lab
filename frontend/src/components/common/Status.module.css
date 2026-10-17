@@ -1,0 +1,40 @@
+.spinner {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--text-faint);
+  font-size: 12px;
+}
+
+.spin { animation: spin 0.9s linear infinite; }
+
+@keyframes spin { to { transform: rotate(360deg); } }
+
+.empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 6px;
+  padding: 28px 16px;
+  color: var(--text-muted);
+}
+
+.emptyIcon { color: var(--text-faint); margin-bottom: 4px; }
+.emptyTitle { color: var(--text); font-weight: 600; font-size: 14px; }
+.emptyText { font-size: 13px; max-width: 46ch; line-height: 1.5; }
+.emptyAction { margin-top: 10px; display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; }
+
+.error {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  border-radius: var(--radius);
+  background: var(--danger-soft);
+  border: 1px solid rgb(226 113 106 / 0.35);
+  color: #f2b7b2;
+  font-size: 13px;
+}
+.error svg { flex-shrink: 0; }
+.errorText { flex: 1; line-height: 1.4; }
