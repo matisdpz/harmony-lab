@@ -27,11 +27,17 @@ interface KeyboardPanelProps {
   /** Notes to keep in view; the range follows them when they leave the visible octaves. */
   follow?: readonly number[]
   label?: string
+  /** Colour every key of these pitch classes (e.g. an improvisation guide); explicit `highlights` win. */
+  pitchClassHighlights?: ReadonlyMap<number, KeyHighlight>
+  /** Which legend to show. */
+  legend?: 'chord' | 'improvisation'
 }
 
 const OCTAVE_OPTIONS = [2, 3, 4, 5]
 
-export function KeyboardPanel({ highlights, title, actions, onKeyPress, follow, label = 'Piano keyboard' }: KeyboardPanelProps) {
+export function KeyboardPanel({
+  highlights, title, actions, onKeyPress, follow, label = 'Piano keyboard', pitchClassHighlights, legend = 'chord',
+}: KeyboardPanelProps) {
   const audio = useAudio()
   const { labelMode } = useSettings()
   // Phones get two octaves so keys stay tappable; wider screens start with four (C2-B5).
@@ -56,6 +62,14 @@ export function KeyboardPanel({ highlights, title, actions, onKeyPress, follow, 
   }, [followKey, octaves])
 
   const outOfRange = [...highlights.keys()].filter((m) => m < low || m > high).length
+  let shown = highlights
+  if (pitchClassHighlights) {
+    shown = new Map(highlights)
+    for (let midi = low; midi <= high; midi++) {
+      const pc = pitchClassHighlights.get(midi % 12)
+      if (pc && !shown.has(midi)) shown.set(midi, pc)
+    }
+  }
 
   return (
     <section className={styles.panel} aria-label={label}>
@@ -64,6 +78,10 @@ export function KeyboardPanel({ highlights, title, actions, onKeyPress, follow, 
         <div className={styles.legend} aria-hidden>
           <span className={styles.swatchRoot} /> Root
           <span className={styles.swatchTone} /> Chord tone
+          {legend === 'improvisation' && <>
+            <span className={styles.swatchScale} /> Safe
+            <span className={styles.swatchTension} /> Tension
+          </>}
         </div>
         <div className={styles.controls}>
           {actions}
@@ -99,7 +117,7 @@ export function KeyboardPanel({ highlights, title, actions, onKeyPress, follow, 
       <PianoKeyboard
         low={low}
         high={high}
-        highlights={highlights}
+        highlights={shown}
         sounding={audio.soundingNotes}
         labelMode={labelMode}
         onKeyPress={onKeyPress ?? ((midi) => void audio.playNote(midi))}

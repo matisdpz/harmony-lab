@@ -184,4 +184,39 @@ class TheoryControllerTest {
                 .andExpect(jsonPath("$.alternatives[0].title").value("Smoothest voicings"))
                 .andExpect(jsonPath("$.alternatives[0].metrics.totalVoiceMovement").exists());
     }
+
+    @Test
+    void listsPresetsRealisedInTheRequestedKey() throws Exception {
+        mvc.perform(get("/api/theory/presets").param("tonic", "A").param("mode", "MINOR"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[?(@.id == 'andalusian')].chords[3].root").value("E"))
+                .andExpect(jsonPath("$[?(@.id == 'andalusian')].chords[3].quality").value("MAJOR"))
+                .andExpect(jsonPath("$[0].chords[0].voicing").isArray())
+                .andExpect(jsonPath("$[?(@.id == 'pop')]").isEmpty());
+    }
+
+    @Test
+    void buildsAnImprovisationGuideFromSymbols() throws Exception {
+        postJson("/api/theory/improvisation", """
+                {"key":{"tonic":"C","mode":"MAJOR"},"symbols":["Dm7","G7","Cmaj7"],"beatsPerChord":2}""")
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.chords", hasSize(3)))
+                .andExpect(jsonPath("$.chords[1].chord.symbol", containsString("G7")))
+                .andExpect(jsonPath("$.chords[1].chord.durationBeats").value(2))
+                .andExpect(jsonPath("$.chords[1].guide[0].role").value("ROOT"))
+                .andExpect(jsonPath("$.chords[1].guide[?(@.note == 'C')].role").value("TENSION"))
+                .andExpect(jsonPath("$.chords[2].guide[?(@.note == 'F')].reason", hasSize(1)))
+                .andExpect(jsonPath("$.legend", containsString("conventions")));
+    }
+
+    @Test
+    void reportsInvalidSymbolsAndEmptyRequests() throws Exception {
+        postJson("/api/theory/improvisation", """
+                {"key":{"tonic":"C","mode":"MAJOR"},"symbols":["C","Xyz"]}""")
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.errors[0].field").value("symbols[1]"));
+        postJson("/api/theory/improvisation", "{\"key\":{\"tonic\":\"C\",\"mode\":\"MAJOR\"}}")
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.errors[0].field").value("chords"));
+    }
 }

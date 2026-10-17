@@ -20,6 +20,8 @@ import com.harmonylab.music.Voicing;
 import com.harmonylab.music.VoicingGenerator;
 import com.harmonylab.music.VoicingStyle;
 import com.harmonylab.music.analysis.ChordInterpretation;
+import com.harmonylab.music.improvisation.ImprovisationGuide;
+import com.harmonylab.music.improvisation.ProgressionPresets;
 import com.harmonylab.music.analysis.ChordInterpreter;
 import com.harmonylab.music.analysis.HarmonicAnalyzer;
 import com.harmonylab.music.analysis.ProgressionAnalysis;
@@ -244,6 +246,84 @@ public class TheoryService {
         } catch (IllegalArgumentException e) {
             throw FieldValidationException.single("style", "must be one of CLOSE, OPEN, DROP2");
         }
+    }
+
+    // ---- improvisation ------------------------------------------------------------------------------
+
+    static final String GUIDE_LEGEND = "Chord tones are the most stable targets, scale notes are safe for simple lines, "
+            + "and tensions (avoid notes, altered dominant notes, blue notes) are expressive but should resolve. "
+            + "These are stylistic conventions, not rules.";
+
+    public List<PresetView> presets(String tonic, String mode) {
+        Key key;
+        try {
+            key = new Key(NoteName.parse(tonic), Mode.fromId(mode));
+        } catch (InvalidMusicInputException e) {
+            throw FieldValidationException.single("key", e.getMessage());
+        }
+        List<PresetView> result = new ArrayList<>();
+        for (ProgressionPresets.Preset preset : ProgressionPresets.forMode(key.mode())) {
+            List<ProgressionPresets.RealizedChord> realized = ProgressionPresets.realize(preset, key);
+            List<ChordView> chords = voiced(realized.stream().map(ProgressionPresets.RealizedChord::chord).toList(),
+                    realized.stream().map(ProgressionPresets.RealizedChord::beats).toList(), Register.DEFAULT);
+            result.add(new PresetView(preset.id(), preset.name(), preset.description(), preset.mode().name(), chords));
+        }
+        return result;
+    }
+
+    public ImprovisationResponse improvisation(ImprovisationRequest request) {
+        Key key = DomainMapper.toKey(request.key(), "key");
+        Register register = DomainMapper.toRegister(request.register(), "register");
+        int defaultBeats = request.beatsPerChord() == null ? 4 : request.beatsPerChord();
+        List<Chord> chords = new ArrayList<>();
+        List<Integer> beats = new ArrayList<>();
+        List<Voicing> givenVoicings = new ArrayList<>();
+        if (request.symbols() != null && !request.symbols().isEmpty()) {
+            List<FieldValidationException.FieldError> errors = new ArrayList<>();
+            for (int i = 0; i < request.symbols().size(); i++) {
+                try {
+                    chords.add(ChordSymbol.parse(request.symbols().get(i)));
+                    beats.add(defaultBeats);
+                } catch (InvalidMusicInputException e) {
+                    errors.add(new FieldValidationException.FieldError("symbols[" + i + "]", e.getMessage()));
+                }
+            }
+            if (!errors.isEmpty()) {
+                throw new FieldValidationException(errors);
+            }
+        } else if (request.chords() != null && !request.chords().isEmpty()) {
+            for (ProgressionChord pc : DomainMapper.toProgression(request.chords(), "chords", false)) {
+                chords.add(pc.chord());
+                givenVoicings.add(pc.voicing());
+            }
+            request.chords().forEach(c -> beats.add(c.durationBeats() == null ? defaultBeats : c.durationOrDefault()));
+        } else {
+            throw FieldValidationException.single("chords", "give at least one chord (chords or symbols)");
+        }
+
+        List<ChordView> views = givenVoicings.size() == chords.size() && givenVoicings.stream().allMatch(java.util.Objects::nonNull)
+                ? java.util.stream.IntStream.range(0, chords.size())
+                    .mapToObj(i -> DomainMapper.toView(chords.get(i), givenVoicings.get(i), beats.get(i))).toList()
+                : voiced(chords, beats, register);
+        List<ImprovisationChordView> result = new ArrayList<>();
+        for (int i = 0; i < chords.size(); i++) {
+            Chord chord = chords.get(i);
+            List<GuideNoteView> guide = ImprovisationGuide.forChord(key, chord).stream()
+                    .map(n -> new GuideNoteView(n.pitchClass(), n.name().toString(), n.role().name(), n.reason()))
+                    .toList();
+            result.add(new ImprovisationChordView(views.get(i), guide));
+        }
+        return new ImprovisationResponse(key.toString(), result, GUIDE_LEGEND);
+    }
+
+    /** Smooth voicings for a chord list (inversions allowed), as views carrying their beat counts. */
+    private static List<ChordView> voiced(List<Chord> chords, List<Integer> beats, Register register) {
+        OptimizedProgression optimized = ProgressionVoicer.optimize(chords, register, true, null);
+        List<ChordView> views = new ArrayList<>();
+        for (int i = 0; i < chords.size(); i++) {
+            views.add(DomainMapper.toView(optimized.chords().get(i), optimized.voicings().get(i), beats.get(i)));
+        }
+        return views;
     }
 
     // ---- domain → view conversions -------------------------------------------------------------------

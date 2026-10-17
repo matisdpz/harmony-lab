@@ -27,6 +27,9 @@
 .swatchRoot, .swatchTone { width: 10px; height: 10px; border-radius: 2px; display: inline-block; }
 .swatchRoot { background: var(--accent); }
 .swatchTone { background: var(--tone); margin-left: 6px; }
+.swatchScale, .swatchTension { width: 10px; height: 10px; border-radius: 2px; display: inline-block; margin-left: 6px; }
+.swatchScale { background: #c5cfee; }
+.swatchTension { background: #e8857d; }
 
 .controls { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; }
 

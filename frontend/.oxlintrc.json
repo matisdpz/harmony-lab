@@ -1,7 +1,12 @@
 {
   "$schema": "./node_modules/oxlint/configuration_schema.json",
-  "plugins": ["react", "typescript", "vitest"],
+  "plugins": [
+    "react",
+    "typescript",
+    "vitest"
+  ],
   "rules": {
-    "react/only-export-components": "off"
+    "react/only-export-components": "off",
+    "vitest/require-mock-type-parameters": "off"
   }
 }

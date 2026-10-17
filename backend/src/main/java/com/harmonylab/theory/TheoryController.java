@@ -82,4 +82,16 @@ public class TheoryController {
     public AlternativesResponse alternatives(@Valid @RequestBody ProgressionRequest request) {
         return service.alternatives(request);
     }
+
+    @GetMapping("/presets")
+    @Operation(summary = "Common progressions (pop, ii–V–I, blues, Andalusian...) realised and voiced in a key")
+    public java.util.List<PresetView> presets(@RequestParam String tonic, @RequestParam String mode) {
+        return service.presets(tonic, mode);
+    }
+
+    @PostMapping("/improvisation")
+    @Operation(summary = "For each chord: voicing plus chord tones, safe scale notes and tension notes for improvising")
+    public ImprovisationResponse improvisation(@Valid @RequestBody ImprovisationRequest request) {
+        return service.improvisation(request);
+    }
 }

@@ -154,3 +154,23 @@ The point breakdown is returned with every suggestion.
 
 `AlternativeGenerator` builds whole-progression alternatives. One is the DP re-voicing. The others are, for
 each objective, the single best-scoring replacement anywhere in the progression.
+
+## Improvisation guide (`improvisation/ImprovisationGuide`)
+
+For a chord in a key, every pitch class gets one role:
+
+1. **Chord scale.** Start from the key's scale and let each chord tone replace the scale note with the same
+   letter. E7 in A minor gives A B C D E F G#, and C7 in C major gives C D E F G A Bb.
+2. **Root and chord tones.** These are the most stable targets.
+3. **Scale notes.** These are safe, *unless* they lie a semitone above a chord tone. Such "avoid notes" (F
+   over Cmaj7, C over G7) clash when held but work in passing, so they count as **tensions**.
+4. **Dominant chords.** On a dominant seventh, or a major triad with dominant function, b9, #9 and b13 are
+   added as tensions when they are not already in the chord scale.
+5. **Blue notes.** In major, b3 and b5 are added as tensions; in minor, b5 is. This happens only when the
+   note has no other role.
+
+Tension names use the key's spelling when the note belongs to the key (G rather than F## for the #9 of E7
+in A minor). Every note carries a short reason, presented as a stylistic convention.
+
+`ProgressionPresets` defines common progressions by scale degree and quality. It realises them in any key
+of the matching mode, and the voicings come from `ProgressionVoicer`.

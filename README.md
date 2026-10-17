@@ -25,6 +25,7 @@ involved, and every analysis statement is derived from the actual notes.
 | **Voice Leading Explorer** | For any adjacent pair: ranked voicings of the next chord with costs, explanations and a motion diagram; audition and apply. A dynamic-programming optimiser re-voices the whole progression. |
 | **Suggestions** | Ranked, explained alternatives for the selected chord under four objectives: smooth voice leading, stronger resolution, diatonic alternatives, more harmonic colour. Audition or replace with one click. Says so when nothing scores well. |
 | **Alternatives & comparison** | Whole-progression alternatives (re-voiced, or best single change per objective) and a metrics table comparing the current version, the last saved version and an alternative. |
+| **Improvisation** | Loop a preset progression (pop, 50s, jazz ii–V–I, canon, 12-bar blues, minor pop, Andalusian, minor ii–V–i, minor blues — realised in any key), your workspace progression or one you type (`Dm7 G7 Cmaj7`, kept in this browser). The keyboard colours, for the chord that is sounding, the root, chord tones, safe scale notes and **tension notes in red** (avoid notes, b9/#9/b13 on dominants, blue notes), with a reason for each. Play along with the mouse or the computer keyboard (`A W S E D F T G Y H U J K`, `Z`/`X` octave). |
 | **Saved Projects** | Create, list, open, update, rename, duplicate, delete. Optimistic locking prevents silently overwriting changes made in another tab; unsaved changes are indicated and confirmed before being discarded. |
 
 ## 2. Screenshots
@@ -38,6 +39,8 @@ Screenshots of the running application are in [`docs/screenshots`](docs/screensh
 | ![Chord Explorer](docs/screenshots/chord-explorer.png) | ![Voice leading](docs/screenshots/voice-leading.png) |
 | **Analyzer** | **Mobile** |
 | ![Analyzer](docs/screenshots/analyzer.png) | ![Mobile](docs/screenshots/mobile.png) |
+| **Improvisation** | |
+| ![Improvisation](docs/screenshots/improvisation.png) | |
 
 **Adding or updating screenshots:** start the app (see below), take a screenshot of the page at a
 1600×1000 window (or 390×844 for mobile), save it as a PNG in `docs/screenshots/` and reference it in the
@@ -50,11 +53,12 @@ table above with a relative path.
  ┌───────────────────────────────────────┐   /api/*   ┌───────────────────────────────────────────┐
  │ pages/        Workspace, Explorer,    │  JSON over │ api/        error handling, DTOs, mapping │
  │               Analyzer, VoiceLeading, │ ─────────▶ │ theory/     stateless theory endpoints    │
- │               Projects                │   REST     │ project/    persistence use cases (JPA)   │
+ │               Improvisation, Projects │   REST     │ project/    persistence use cases (JPA)   │
  │ state/        reducer + providers     │            │ music/      ◀── pure domain, no framework │
  │ audio/        Tone.js engine (lazy)   │            │   analysis/ voiceleading/ suggestion/     │
- │ components/   keyboard, inspector...  │            └──────────────────────┬────────────────────┘
- └───────────────────────────────────────┘                                   │ Flyway + JPA
+ │ components/   keyboard, inspector...  │            │   improvisation/                          │
+ └───────────────────────────────────────┘            └──────────────────────┬────────────────────┘
+                                                                             │ Flyway + JPA
                                                                    ┌─────────▼─────────┐
                                                                    │ PostgreSQL 17     │
                                                                    └───────────────────┘
@@ -175,7 +179,8 @@ Tests cover the workspace reducer (ordering, selection consistency, undo/redo, d
 races), the HTTP error mapping, the keyboard component, and user flows rendered as a whole app with the API
 and audio engine mocked at the module boundary: selecting and editing chords, keyboard highlights, reordering
 by button and shortcut, duplicate/delete/undo, chord-symbol and tempo validation, playback calls, save
-success/failure, project list errors with retry, rename validation and confirmed deletion.
+success/failure, project list errors with retry, rename validation and confirmed deletion, and the improvisation
+page (guide colours on the keyboard, looped playback, computer-keyboard notes, custom progression validation).
 
 ## 11. Accessing the application
 
@@ -205,6 +210,8 @@ Main endpoints:
 | `POST` | `/api/theory/analyze` | Progression analysis |
 | `POST` | `/api/theory/voice-leading` · `/voice-leading/optimize` | Ranked voicings / whole-progression optimisation |
 | `POST` | `/api/theory/suggestions` · `/alternatives` | Suggestions / whole-progression alternatives |
+| `GET` | `/api/theory/presets?tonic=A&mode=MINOR` | Preset progressions realised and voiced in a key |
+| `POST` | `/api/theory/improvisation` | Per chord: voicing plus chord tones, safe notes and tension notes (from `chords` or `symbols`) |
 
 Errors are `application/problem+json`: `{"title","status","detail","errors":[{"field","message"}]}`. Stack
 traces are never returned; unexpected errors are logged server-side.
@@ -253,6 +260,9 @@ traces are never returned; unexpected errors are logged server-side.
 * **Sound.** A synthesised FM voice, not a sampled piano. Timing depends on the browser's audio clock;
   very dense loops on slow machines may glitch. The note duration is fixed at about 96% of each
   chord's length (no sustain pedal or dynamics).
+* **Improvisation guide** follows one convention (chord scale = key scale adjusted to the chord's tones;
+  avoid notes, altered dominant tensions and blue notes as "tension"). Other approaches (modes per chord,
+  pentatonics, bebop scales) are not offered. Custom improvisation loops are stored in the browser only.
 * **Conflict handling** is "detect and let the user choose" (reload or save a copy), not merging.
 
 ## 15. Future improvements

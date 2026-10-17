@@ -44,6 +44,29 @@ export function createTheoryApiMock() {
     alternatives: vi.fn(async () => ({ current: null, alternatives: [] })),
     identify: vi.fn(),
     key: vi.fn(),
+    presets: vi.fn(async () => [
+      { id: 'minor-pop', name: 'Minor pop (i–VI–III–VII)', description: 'Minor loop.', mode: 'MINOR', chords: [AM, F] },
+    ]),
+    improvisation: vi.fn(async (body: { symbols?: string[]; chords?: ChordInput[] }) => {
+      const bad = body.symbols?.findIndex((s) => !['Am', 'F', 'Dm'].includes(s)) ?? -1
+      if (bad >= 0) {
+        throw new ApiError(400, 'Validation failed', 'invalid', [{ field: `symbols[${bad}]`, message: `Invalid chord symbol '${body.symbols![bad]}'` }])
+      }
+      const chords = body.symbols ? body.symbols.map((s) => (s === 'Dm' ? DM : s === 'F' ? F : AM)) : (body.chords ?? []).map(chordFor)
+      return {
+        key: 'A minor',
+        legend: 'Stylistic conventions.',
+        chords: chords.map((chord) => ({
+          chord: { ...chord, durationBeats: 4 },
+          guide: [
+            { pitchClass: 9, note: 'A', role: 'ROOT' as const, reason: 'Root' },
+            { pitchClass: 0, note: 'C', role: 'CHORD_TONE' as const, reason: 'Chord tone' },
+            { pitchClass: 2, note: 'D', role: 'SCALE' as const, reason: 'In the chord scale: safe' },
+            { pitchClass: 5, note: 'F', role: 'TENSION' as const, reason: 'Avoid note: a semitone above E' },
+          ],
+        })),
+      }
+    }),
   }
 }
 

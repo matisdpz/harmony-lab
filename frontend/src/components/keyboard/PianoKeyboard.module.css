@@ -69,3 +69,23 @@
 
 .sounding { transform: translateY(2px); filter: brightness(1.12); }
 .white.sounding:not(.tone):not(.root) { background: linear-gradient(#d7d3c8, #c7c2b5); }
+
+/* improvisation guide: safe scale notes (pale blue) and tension notes (red, with a marker bar) */
+.white.scale { background: linear-gradient(#e3e8f7, #c5cfee); }
+.black.scale { background: linear-gradient(#5a6488, #3c4466); }
+.white.tension { background: linear-gradient(#f6c4bf, #e8857d); }
+.black.tension { background: linear-gradient(#c8564e, #8f2f29); }
+.scale .label { color: #2b3350; }
+.black.scale .label, .black.tension .label { color: #f3f1ec; }
+.tension .label { color: #4a1410; }
+.tension::after {
+  content: '';
+  position: absolute;
+  top: 4px;
+  left: 20%;
+  right: 20%;
+  height: 3px;
+  border-radius: 2px;
+  background: #9b231b;
+}
+.black.tension::after { background: #ffd2cd; }

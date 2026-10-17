@@ -177,4 +177,27 @@ public final class TheoryDtos {
 
     public record AlternativesResponse(MetricsView current, List<AlternativeView> alternatives) {
     }
+
+    // ---- improvisation -------------------------------------------------------------------------------
+
+    public record PresetView(String id, String name, String description, String mode, List<ChordView> chords) {
+    }
+
+    /** Either {@code chords} (structured) or {@code symbols} (e.g. ["Am", "F", "C", "G"]) must be given. */
+    public record ImprovisationRequest(
+            @NotNull(message = "is required") @Valid KeyDto key,
+            @Size(max = 64, message = "must contain at most 64 chords") List<@Valid ChordInput> chords,
+            @Size(max = 64, message = "must contain at most 64 chords") List<String> symbols,
+            @Valid RegisterDto register,
+            @Min(value = 1, message = "must be between 1 and 16") @Max(value = 16, message = "must be between 1 and 16") Integer beatsPerChord) {
+    }
+
+    public record GuideNoteView(int pitchClass, String note, String role, String reason) {
+    }
+
+    public record ImprovisationChordView(ChordView chord, List<GuideNoteView> guide) {
+    }
+
+    public record ImprovisationResponse(String key, List<ImprovisationChordView> chords, String legend) {
+    }
 }

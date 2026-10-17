@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { NavLink, Outlet } from 'react-router'
 import {
-  AudioWaveform, BookOpenText, FolderOpen, GitCompareArrows, LayoutPanelTop, Menu, Plus, Settings, Spline, X,
+  AudioWaveform, BookOpenText, FolderOpen, GitCompareArrows, KeyboardMusic, LayoutPanelTop, Menu, Plus, Settings, Spline, X,
 } from 'lucide-react'
 import { useWorkspace } from '../../state/WorkspaceProvider'
 import { useProjects } from '../../state/ProjectsProvider'
@@ -14,6 +14,7 @@ const NAV = [
   { to: '/explorer', label: 'Chord Explorer', icon: BookOpenText },
   { to: '/analyzer', label: 'Analyzer', icon: AudioWaveform },
   { to: '/voice-leading', label: 'Voice Leading', icon: Spline },
+  { to: '/improvise', label: 'Improvisation', icon: KeyboardMusic },
   { to: '/projects', label: 'Projects', icon: FolderOpen },
 ]
 

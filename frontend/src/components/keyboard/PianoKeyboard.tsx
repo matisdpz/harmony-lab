@@ -4,7 +4,7 @@ import type { LabelMode } from '../../state/SettingsProvider'
 import styles from './PianoKeyboard.module.css'
 
 export interface KeyHighlight {
-  role: 'root' | 'tone'
+  role: 'root' | 'tone' | 'scale' | 'tension'
   /** Spelled note (e.g. "Eb4") from the chord; shown on the key. */
   label?: string
 }
@@ -18,6 +18,13 @@ interface PianoKeyboardProps {
   labelMode?: LabelMode
   onKeyPress?: (midi: number) => void
   label: string
+}
+
+const ROLE_TEXT: Record<KeyHighlight['role'], string> = {
+  root: 'chord root',
+  tone: 'chord tone',
+  scale: 'safe scale note',
+  tension: 'tension note',
 }
 
 /** Extends a range outward so it starts and ends on white keys. */
@@ -56,7 +63,9 @@ export const PianoKeyboard = memo(function PianoKeyboard({
     const position = black
       ? { left: `${whiteIndex * whiteWidth - whiteWidth * 0.31}%`, width: `${whiteWidth * 0.62}%` }
       : { left: `${whiteIndex * whiteWidth}%`, width: `${whiteWidth}%` }
-    const description = highlight ? `${highlight.label ?? name}, ${highlight.role === 'root' ? 'chord root' : 'chord tone'}` : name
+    // Pitch-class labels ("F") get the key's octave so screen readers can tell the keys apart.
+    const spoken = highlight?.label ? (/\d$/.test(highlight.label) ? highlight.label : `${highlight.label}${Math.floor(midi / 12) - 1}`) : name
+    const description = highlight ? `${spoken}, ${ROLE_TEXT[highlight.role]}` : name
 
     keys.push(
       <button

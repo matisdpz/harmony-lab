@@ -270,3 +270,26 @@ export interface ProjectRequest {
   chords: ChordInput[]
   version?: number
 }
+
+export type GuideRole = 'ROOT' | 'CHORD_TONE' | 'SCALE' | 'TENSION'
+
+export interface GuideNoteView {
+  pitchClass: number
+  note: string
+  role: GuideRole
+  reason: string
+}
+
+export interface PresetView {
+  id: string
+  name: string
+  description: string
+  mode: Mode
+  chords: VoicedChord[]
+}
+
+export interface ImprovisationResponse {
+  key: string
+  chords: { chord: VoicedChord; guide: GuideNoteView[] }[]
+  legend: string
+}

@@ -14,6 +14,7 @@ import { ExplorerPage } from './pages/ExplorerPage'
 import { AnalyzerPage } from './pages/AnalyzerPage'
 import { VoiceLeadingPage } from './pages/VoiceLeadingPage'
 import { ProjectsPage } from './pages/ProjectsPage'
+import { ImprovisationPage } from './pages/ImprovisationPage'
 
 /** Everything depends on the theory catalog; wait for it (with a retry) before rendering the app. */
 function BackendGate({ children }: { children: ReactNode }) {
@@ -37,6 +38,7 @@ export function AppRoutes() {
         <Route path="explorer" element={<ExplorerPage />} />
         <Route path="analyzer" element={<AnalyzerPage />} />
         <Route path="voice-leading" element={<VoiceLeadingPage />} />
+        <Route path="improvise" element={<ImprovisationPage />} />
         <Route path="projects" element={<ProjectsPage />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Route>
