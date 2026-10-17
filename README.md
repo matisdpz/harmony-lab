@@ -1,5 +1,7 @@
 # Harmony Lab
 
+[![CI](https://github.com/matisdpz/harmony-lab/actions/workflows/ci.yml/badge.svg)](https://github.com/matisdpz/harmony-lab/actions/workflows/ci.yml)
+
 Harmony Lab is an interactive environment for exploring tonal harmony. Build a chord progression, inspect
 and hear every chord on a piano keyboard, see a Roman-numeral analysis, compare voicings ranked by a
 voice-leading algorithm, and get explained chord suggestions. Projects are saved in PostgreSQL.
@@ -274,4 +276,4 @@ The following were run successfully while preparing this repository:
   chords (keyboard highlights checked), undo, add a chord by symbol, play and stop (Tone.js started without
   errors), find voicings, load alternatives, save, open each page, delete via the UI, check the mobile layout
   for horizontal overflow. No console errors.
-* The GitHub Actions workflow has **not** been run on GitHub yet (it mirrors the commands above).
+* The GitHub Actions workflow (frontend checks, backend tests with Testcontainers, Docker image builds) passes on GitHub.
