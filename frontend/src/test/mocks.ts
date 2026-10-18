@@ -43,6 +43,19 @@ export function createTheoryApiMock() {
     voiceLeading: vi.fn(async () => ({ candidates: [], costFunction: 'cost' })),
     alternatives: vi.fn(async () => ({ current: null, alternatives: [] })),
     identify: vi.fn(),
+    transpose: vi.fn(async (_key: KeyDto, chords: ChordInput[]) => ({
+      key: { tonic: 'E', mode: 'MINOR' }, keyLabel: 'E minor',
+      chords: chords.map((c) => ({ ...chordFor(c), symbol: `${chordFor(c).symbol}+1`, voicing: (c.voicing ?? []).map((n) => n + 1) })),
+    })),
+    detectKey: vi.fn(async () => ({
+      candidates: [
+        { key: { tonic: 'A', mode: 'MINOR' }, label: 'A minor', correlation: 0.82 },
+        { key: { tonic: 'C', mode: 'MAJOR' }, label: 'C major', correlation: 0.71 },
+        { key: { tonic: 'F', mode: 'MAJOR' }, label: 'F major', correlation: 0.6 },
+      ],
+      confidence: 'STRONG' as const,
+      explanation: 'The notes correlate best with A minor.',
+    })),
     key: vi.fn(),
     presets: vi.fn(async () => [
       { id: 'minor-pop', name: 'Minor pop (i–VI–III–VII)', description: 'Minor loop.', mode: 'MINOR', chords: [AM, F] },
@@ -79,5 +92,8 @@ export function createAudioEngineMock() {
     stop: vi.fn(),
     setTempo: vi.fn(),
     setVolume: vi.fn(),
+    setInstrument: vi.fn(async () => {}),
+    noteOn: vi.fn(async () => {}),
+    noteOff: vi.fn(),
   }
 }

@@ -1,12 +1,13 @@
 import { useState } from 'react'
-import { Pause, Play, Redo2, Repeat, Save, Square, Undo2 } from 'lucide-react'
-import type { Mode } from '../../api/types'
+import { KeyPicker } from '../common/KeyPicker'
+import { FileMenu } from './FileMenu'
+import { KeyHint } from './KeyHint'
+import { SoundPicker } from '../audio/SoundPicker'
+import { ArrowDown, ArrowUp, Pause, Play, Redo2, Repeat, Save, Square, Undo2 } from 'lucide-react'
 import { useWorkspace } from '../../state/WorkspaceProvider'
-import { useCatalog } from '../../state/CatalogProvider'
 import { useSettings } from '../../state/SettingsProvider'
 import { useAudio } from '../../audio/AudioProvider'
 import { MAX_TEMPO, MIN_TEMPO } from '../../model/workspace'
-import { formatMusic } from '../../model/notes'
 import { Spinner } from '../common/Status'
 import styles from './WorkspaceHeader.module.css'
 
@@ -17,9 +18,8 @@ export function validateTempo(text: string): string | null {
   return null
 }
 
-export function WorkspaceHeader({ onTogglePlay }: { onTogglePlay: () => void }) {
+export function WorkspaceHeader({ onTogglePlay }: { onTogglePlay: (from?: number) => void }) {
   const workspace = useWorkspace()
-  const catalog = useCatalog()
   const audio = useAudio()
   const settings = useSettings()
   const { content, state, dirty } = workspace
@@ -38,11 +38,6 @@ export function WorkspaceHeader({ onTogglePlay }: { onTogglePlay: () => void }) 
     } else {
       setDraft({ tempo: content.tempoBpm, text })
     }
-  }
-
-  const setMode = (mode: Mode) => {
-    const tonics = catalog.keyTonics[mode]
-    workspace.setKey({ mode, tonic: tonics.includes(content.key.tonic) ? content.key.tonic : tonics[0] })
   }
 
   const status = state.projectId === null
@@ -69,6 +64,7 @@ export function WorkspaceHeader({ onTogglePlay }: { onTogglePlay: () => void }) 
           </span>
         </div>
         <div className={styles.actions}>
+          <FileMenu />
           <button type="button" className="btn btn-ghost btn-icon" onClick={workspace.undo} disabled={state.past.length === 0}
                   aria-label="Undo" title="Undo (Ctrl+Z)">
             <Undo2 size={16} />
@@ -97,18 +93,14 @@ export function WorkspaceHeader({ onTogglePlay }: { onTogglePlay: () => void }) 
 
       <div className={styles.controls}>
         <div className={styles.group}>
-          <label className="field">
-            <span className="field-label">Key</span>
-            <select className="select" value={content.key.tonic} aria-label="Key tonic"
-                    onChange={(e) => workspace.setKey({ ...content.key, tonic: e.target.value })}>
-              {catalog.keyTonics[content.key.mode].map((t) => <option key={t} value={t}>{formatMusic(t)}</option>)}
-            </select>
-          </label>
+          <KeyPicker value={content.key} onChange={(key) => workspace.setKey(key)} />
           <div className="field">
-            <span className="field-label">Scale</span>
-            <div className="segmented" role="group" aria-label="Scale">
-              <button type="button" aria-pressed={content.key.mode === 'MAJOR'} onClick={() => setMode('MAJOR')}>Major</button>
-              <button type="button" aria-pressed={content.key.mode === 'MINOR'} onClick={() => setMode('MINOR')}>Natural minor</button>
+            <span className="field-label">Transpose</span>
+            <div className="segmented" role="group" aria-label="Transpose">
+              <button type="button" onClick={() => void workspace.transpose(-1)} disabled={content.chords.length === 0}
+                      aria-label="Transpose down a semitone" title="Down a semitone (Alt+↓)"><ArrowDown size={14} /></button>
+              <button type="button" onClick={() => void workspace.transpose(1)} disabled={content.chords.length === 0}
+                      aria-label="Transpose up a semitone" title="Up a semitone (Alt+↑)"><ArrowUp size={14} /></button>
             </div>
           </div>
           <label className="field">
@@ -118,10 +110,11 @@ export function WorkspaceHeader({ onTogglePlay }: { onTogglePlay: () => void }) 
                    onChange={(e) => onTempoChange(e.target.value)}
                    onBlur={() => tempoError && setDraft({ tempo: content.tempoBpm, text: String(content.tempoBpm) })} />
           </label>
+          <SoundPicker />
         </div>
 
         <div className={styles.transport}>
-          <button type="button" className={`btn btn-primary ${styles.play}`} onClick={onTogglePlay}
+          <button type="button" className={`btn btn-primary ${styles.play}`} onClick={() => onTogglePlay()}
                   disabled={content.chords.length === 0} title="Play / stop (Space)">
             {playing ? <><Square size={14} aria-hidden /> Stop</> : <><Play size={14} aria-hidden /> Play</>}
           </button>
@@ -136,6 +129,7 @@ export function WorkspaceHeader({ onTogglePlay }: { onTogglePlay: () => void }) 
           </span>
         </div>
       </div>
+      <KeyHint />
       {tempoError && <p id="tempo-error" className="field-error" role="alert">{tempoError}</p>}
       {audio.error && <p className="field-error" role="alert">{audio.error}</p>}
     </header>

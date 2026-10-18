@@ -145,6 +145,7 @@ button:disabled { cursor: not-allowed; }
   white-space: nowrap;
   transition: background 120ms, border-color 120ms, color 120ms;
 }
+.btn svg { flex-shrink: 0; }
 .btn:hover:not(:disabled) { border-color: var(--ink); background: var(--paper-hover); }
 .btn:disabled { opacity: 0.4; }
 .btn-primary { background: var(--blue); border-color: var(--blue); color: var(--on-blue); }

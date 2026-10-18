@@ -146,6 +146,51 @@ class ProjectApiIT {
     }
 
     @Test
+    void storesEachChordsPlaybackPatternAndDefaultsToBlock() throws Exception {
+        String arpeggio = """
+                {"root":"F","quality":"MAJOR","inversion":0,"voicing":[53,57,60],"durationBeats":4,"pattern":"ALBERTI"}""";
+        String id = JsonPath.read(create(project("Patterns", null, AM, arpeggio)), "$.id");
+        mvc.perform(get("/api/projects/" + id))
+                .andExpect(jsonPath("$.chords[0].pattern").value("BLOCK"))
+                .andExpect(jsonPath("$.chords[1].pattern").value("ALBERTI"));
+
+        String copyId = JsonPath.read(mvc.perform(post("/api/projects/" + id + "/duplicate"))
+                .andExpect(status().isCreated()).andReturn().getResponse().getContentAsString(), "$.id");
+        mvc.perform(get("/api/projects/" + copyId))
+                .andExpect(jsonPath("$.chords[1].pattern").value("ALBERTI"));
+    }
+
+    @Test
+    void storesExtendedChordsInHighInversions() throws Exception {
+        String g13OverE = """
+                {"root":"G","quality":"DOMINANT13","inversion":5,"voicing":[52,55,59,62,65,69],"durationBeats":4}""";
+        String id = JsonPath.read(create(project("Jazz", null, g13OverE)), "$.id");
+        mvc.perform(get("/api/projects/" + id))
+                .andExpect(jsonPath("$.chords[0].symbol").value("G13/E"))
+                .andExpect(jsonPath("$.chords[0].inversion").value(5));
+    }
+
+    @Test
+    void storesProjectsInModalKeys() throws Exception {
+        String body = """
+                {"name":"Modal","key":{"tonic":"D","mode":"DORIAN"},"tempoBpm":100,"register":{"low":45,"high":79},
+                 "chords":[{"root":"D","quality":"MINOR7","inversion":0,"voicing":[50,53,57,60]}]}""";
+        String id = JsonPath.read(create(body), "$.id");
+        mvc.perform(get("/api/projects/" + id)).andExpect(jsonPath("$.key.mode").value("DORIAN"));
+        mvc.perform(get("/api/projects")).andExpect(jsonPath("$[0].keyLabel").value("D Dorian"));
+    }
+
+    @Test
+    void rejectsAnUnknownPlaybackPattern() throws Exception {
+        String bad = """
+                {"root":"C","quality":"MAJOR","inversion":0,"voicing":[60,64,67],"pattern":"SWING"}""";
+        mvc.perform(post("/api/projects").contentType(MediaType.APPLICATION_JSON).content(project("Bad", null, bad)))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.errors[0].field").value("chords[0].pattern"))
+                .andExpect(jsonPath("$.errors[0].message", containsString("ARPEGGIO_UP")));
+    }
+
+    @Test
     void failedUpdateIsAtomic() throws Exception {
         String id = JsonPath.read(create(project("Atomic", null, AM, F)), "$.id");
         String invalidChord = """

@@ -27,8 +27,9 @@ public final class ChordSymbol {
         NoteName root = NoteName.parse(matcher.group(1));
         String suffix = matcher.group(2);
         ChordQuality quality = ChordQuality.fromSuffix(suffix).orElseThrow(() -> new InvalidMusicInputException(
-                "Unsupported chord quality '" + suffix + "' in '" + text + "'. Supported suffixes include: "
-                        + "(none), m, dim, aug, sus2, sus4, maj7, m7, 7, m7b5, dim7, 6, m6, add9, madd9."));
+                "Unsupported chord quality '" + suffix + "' in '" + text + "'. Supported suffixes: (none), "
+                        + String.join(", ", java.util.Arrays.stream(ChordQuality.values()).map(ChordQuality::suffix)
+                        .filter(s -> !s.isEmpty()).toList()) + "."));
         Chord chord = new Chord(root, quality, 0);
         if (matcher.group(3) == null) {
             return chord;

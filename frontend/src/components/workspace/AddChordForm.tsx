@@ -1,4 +1,5 @@
 import { useState, type FormEvent } from 'react'
+import { QualityOptions } from '../common/QualityOptions'
 import { Plus } from 'lucide-react'
 import { useWorkspace } from '../../state/WorkspaceProvider'
 import { useCatalog } from '../../state/CatalogProvider'
@@ -67,7 +68,7 @@ export function AddChordForm() {
             {catalog.roots.map((r) => <option key={r} value={r}>{formatMusic(r)}</option>)}
           </select>
           <select className={`select ${styles.quality}`} value={quality} onChange={(e) => setQuality(e.target.value)} aria-label="Quality for new chord">
-            {catalog.qualities.map((q) => <option key={q.id} value={q.id}>{q.name}</option>)}
+            <QualityOptions qualities={catalog.qualities} withSuffix={false} />
           </select>
           <button type="button" className="btn" onClick={() => void addPicked()} disabled={busy} aria-label="Add picked chord">
             <Plus size={15} aria-hidden /> Add

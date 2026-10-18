@@ -28,6 +28,36 @@
 .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--blue); }
 
 .actions { display: flex; align-items: center; gap: 4px; }
+
+.menu { position: relative; margin-right: 6px; }
+.menuList {
+  position: absolute;
+  right: 0;
+  top: calc(100% + 4px);
+  z-index: 20;
+  min-width: 260px;
+  display: flex;
+  flex-direction: column;
+  padding: 4px;
+  background: var(--paper-raised);
+  border: 1px solid var(--ink);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+}
+.menuList button {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 8px 10px;
+  text-align: left;
+  font-size: 14px;
+  border-radius: var(--radius);
+}
+.menuList button svg { margin-top: 2px; flex-shrink: 0; color: var(--ink-muted); }
+.menuList button:hover:not(:disabled), .menuList button:focus-visible { background: var(--paper-sunk); outline-offset: -2px; }
+.menuList button:disabled { opacity: 0.45; }
+.menuList span { display: flex; flex-direction: column; gap: 1px; }
+.menuList small { font-size: 12px; color: var(--ink-muted); }
 .actions :global(.btn:not(.btn-icon)) { margin-left: 6px; }
 
 .controls {
@@ -58,6 +88,9 @@
   color: var(--ink);
   font-size: 14px;
 }
+.keyHint { display: flex; align-items: center; flex-wrap: wrap; gap: 4px 8px; font-size: 14px; color: var(--ink-muted); margin-top: -4px; }
+.keyHint svg { color: var(--amber); }
+.keyHint strong { font-family: var(--font-score); font-weight: 600; color: var(--ink); font-size: 15px; }
 .conflictActions { display: flex; gap: 6px; flex-wrap: wrap; }
 
 @media (max-width: 640px) {

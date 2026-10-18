@@ -1,9 +1,12 @@
 import type { ChordInput, KeyDto, RegisterDto, VoicedChord } from '../api/types'
+import { PATTERNS, type PlaybackPattern } from './rhythm'
 
 /** A chord in the progression. `id` is a client-side identity that survives reordering and edits. */
 export interface ChordSlot extends VoicedChord {
   id: string
   durationBeats: number
+  /** How the chord is played back; saved with the project. */
+  pattern: PlaybackPattern
 }
 
 export interface ProjectContent {
@@ -45,10 +48,12 @@ export type EditAction =
   | { type: 'addChord'; chord: ChordSlot; index?: number }
   | { type: 'replaceChord'; id: string; chord: VoicedChord }
   | { type: 'setDuration'; id: string; durationBeats: number }
+  | { type: 'setPattern'; id: string; pattern: PlaybackPattern }
   | { type: 'removeChord'; id: string }
   | { type: 'duplicateChord'; id: string; newId: string }
   | { type: 'moveChord'; id: string; toIndex: number }
   | { type: 'replaceAllChords'; chords: VoicedChord[] }
+  | { type: 'transpose'; key: KeyDto; chords: VoicedChord[] }
   | { type: 'clear' }
 
 export type WorkspaceAction =
@@ -68,12 +73,19 @@ export function newSlotId(): string {
   return `chord-${idCounter}-${random.slice(0, 8)}`
 }
 
-export function toSlot(chord: VoicedChord, id: string = newSlotId(), durationBeats?: number): ChordSlot {
-  return { ...chord, id, durationBeats: durationBeats ?? chord.durationBeats ?? 4 }
+export function toSlot(chord: VoicedChord, id: string = newSlotId(), durationBeats?: number, pattern?: PlaybackPattern): ChordSlot {
+  return { ...chord, id, durationBeats: durationBeats ?? chord.durationBeats ?? 4, pattern: pattern ?? toPattern(chord.pattern) }
+}
+
+export function toPattern(value: string | null | undefined): PlaybackPattern {
+  return PATTERNS.find((p) => p.id === value)?.id ?? 'BLOCK'
 }
 
 export function toChordInput(slot: ChordSlot): ChordInput {
-  return { root: slot.root, quality: slot.quality, inversion: slot.inversion, voicing: slot.voicing, durationBeats: slot.durationBeats }
+  return {
+    root: slot.root, quality: slot.quality, inversion: slot.inversion, voicing: slot.voicing,
+    durationBeats: slot.durationBeats, pattern: slot.pattern,
+  }
 }
 
 /** Stable string of everything that is persisted; used to detect unsaved changes. */
@@ -209,13 +221,19 @@ function edit(content: ProjectContent, selectedId: string | null, action: EditAc
     case 'replaceChord': {
       const i = indexOf(action.id)
       if (i < 0) return null
-      const next = chords.map((c) => (c.id === action.id ? { ...action.chord, id: c.id, durationBeats: c.durationBeats } : c))
+      const next = chords.map((c) => (c.id === action.id ? { ...action.chord, id: c.id, durationBeats: c.durationBeats, pattern: c.pattern } : c))
       return { content: { ...content, chords: next }, selectedId }
     }
     case 'setDuration': {
       const i = indexOf(action.id)
       if (i < 0 || chords[i].durationBeats === action.durationBeats) return null
       const next = chords.map((c) => (c.id === action.id ? { ...c, durationBeats: action.durationBeats } : c))
+      return { content: { ...content, chords: next }, selectedId }
+    }
+    case 'setPattern': {
+      const i = indexOf(action.id)
+      if (i < 0 || chords[i].pattern === action.pattern) return null
+      const next = chords.map((c) => (c.id === action.id ? { ...c, pattern: action.pattern } : c))
       return { content: { ...content, chords: next }, selectedId }
     }
     case 'removeChord': {
@@ -248,9 +266,15 @@ function edit(content: ProjectContent, selectedId: string | null, action: EditAc
       // Same length: keep ids so the selection follows its position; otherwise create new slots.
       const sameLength = action.chords.length === chords.length
       const next = action.chords.map((chord, i) =>
-        sameLength ? { ...chord, id: chords[i].id, durationBeats: chords[i].durationBeats } : toSlot(chord))
+        sameLength ? { ...chord, id: chords[i].id, durationBeats: chords[i].durationBeats, pattern: chords[i].pattern } : toSlot(chord))
       const keepSelection = next.some((c) => c.id === selectedId)
       return { content: { ...content, chords: next }, selectedId: keepSelection ? selectedId : next[0]?.id ?? null }
+    }
+    case 'transpose': {
+      // Key and chords change together, as one undo step; slots keep their id, length and rhythm.
+      if (action.chords.length !== chords.length) return null
+      const next = action.chords.map((chord, i) => ({ ...chord, id: chords[i].id, durationBeats: chords[i].durationBeats, pattern: chords[i].pattern }))
+      return { content: { ...content, key: action.key, chords: next }, selectedId }
     }
     case 'clear':
       return chords.length === 0 ? null : { content: { ...content, chords: [] }, selectedId: null }

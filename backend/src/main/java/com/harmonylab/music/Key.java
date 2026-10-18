@@ -31,13 +31,16 @@ public record Key(NoteName tonic, Mode mode) {
         return mode.scaleIntervals().stream().map(tonic::transpose).toList();
     }
 
-    /** Positive = number of sharps, negative = number of flats. */
+    /**
+     * Key signature: positive = number of sharps, negative = number of flats. Harmonic and melodic minor use the
+     * natural minor's signature (their raised degrees are written as accidentals).
+     */
     public int signature() {
         return signatureOf(tonic, mode);
     }
 
     private static int signatureOf(NoteName tonic, Mode mode) {
-        return scaleOf(tonic, mode).stream().mapToInt(NoteName::accidental).sum();
+        return scaleOf(tonic, mode.signatureMode()).stream().mapToInt(NoteName::accidental).sum();
     }
 
     public boolean containsPitchClass(int pitchClass) {

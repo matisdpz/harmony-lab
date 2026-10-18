@@ -1,5 +1,6 @@
 package com.harmonylab.theory;
 
+import com.harmonylab.music.ChordQuality;
 import com.harmonylab.api.ApiExceptionHandler;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -38,10 +39,24 @@ class TheoryControllerTest {
     }
 
     @Test
+    void detectsTheKeyOfAProgression() throws Exception {
+        mvc.perform(post("/api/theory/keys/detect").contentType(MediaType.APPLICATION_JSON).content("""
+                        {"chords":[{"root":"D","quality":"MINOR7"},{"root":"G","quality":"DOMINANT7"},{"root":"C","quality":"MAJOR7","durationBeats":8}]}"""))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.candidates[0].key.tonic").value("C"))
+                .andExpect(jsonPath("$.candidates[0].key.mode").value("MAJOR"))
+                .andExpect(jsonPath("$.candidates[0].label").value("C major"))
+                .andExpect(jsonPath("$.confidence").exists());
+        mvc.perform(post("/api/theory/keys/detect").contentType(MediaType.APPLICATION_JSON).content("{\"chords\":[]}"))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
     void catalogListsAllQualities() throws Exception {
         mvc.perform(get("/api/theory/catalog"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.qualities", hasSize(15)))
+                .andExpect(jsonPath("$.qualities", hasSize(ChordQuality.values().length)))
+                .andExpect(jsonPath("$.qualities[?(@.id == 'ALTERED')].suffix").value("7alt"))
                 .andExpect(jsonPath("$.qualities[0].id").value("MAJOR"))
                 .andExpect(jsonPath("$.objectives", hasSize(4)))
                 .andExpect(jsonPath("$.pitchConvention", containsString("C4")));

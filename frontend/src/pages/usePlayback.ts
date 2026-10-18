@@ -10,15 +10,16 @@ export function useProgressionPlayback() {
   const { loop } = useSettings()
   const playing = audio.isPlaying && audio.sequenceOwner === 'progression'
 
-  const toggle = useCallback(() => {
+  /** Plays from the start, or from a given chord (e.g. the selected one); stops when already playing. */
+  const toggle = useCallback((from = 0) => {
     if (playing) {
       audio.stop()
       return
     }
-    const chords = workspace.content.chords
+    const chords = workspace.content.chords.slice(Math.max(0, from))
     if (chords.length === 0) return
-    void audio.playSequence(chords.map((c) => ({ notes: c.voicing, beats: c.durationBeats })), workspace.content.tempoBpm,
-      { loop, owner: 'progression' })
+    void audio.playSequence(chords.map((c) => ({ notes: c.voicing, beats: c.durationBeats, pattern: c.pattern })), workspace.content.tempoBpm,
+      { loop, owner: 'progression', firstIndex: Math.max(0, from) })
   }, [playing, audio, workspace.content.chords, workspace.content.tempoBpm, loop])
 
   return { playing, toggle }

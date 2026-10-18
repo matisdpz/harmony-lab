@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { screen } from '@testing-library/react'
+import { screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { renderApp } from '../test/renderApp'
 import { theoryApi } from '../api/theory'
@@ -32,6 +32,7 @@ async function renderWorkspace() {
 describe('Workspace', () => {
   beforeEach(() => {
     vi.clearAllMocks()
+    localStorage.clear()
   })
 
   it('loads the example progression and highlights the selected chord on the keyboard', async () => {
@@ -135,8 +136,95 @@ describe('Workspace', () => {
     expect(getAudioEngine().playNote).toHaveBeenCalledWith(62)
     await userEvent.click(screen.getByRole('button', { name: /^Play$/ }))
     expect(getAudioEngine().playSequence).toHaveBeenCalledWith(
-      [{ notes: [57, 60, 64], beats: 4 }, { notes: [57, 60, 65], beats: 4 }, { notes: [55, 60, 64], beats: 4 }, { notes: [55, 59, 62], beats: 4 }],
-      90, expect.any(Object), false)
+      [{ notes: [57, 60, 64], beats: 4, pattern: 'BLOCK' }, { notes: [57, 60, 65], beats: 4, pattern: 'BLOCK' },
+        { notes: [55, 60, 64], beats: 4, pattern: 'BLOCK' }, { notes: [55, 59, 62], beats: 4, pattern: 'BLOCK' }],
+      90, expect.any(Object), expect.objectContaining({ loop: false }))
+  })
+
+  it('changes a chord rhythm, plays a preview and uses it for playback', async () => {
+    await renderWorkspace()
+    await userEvent.selectOptions(screen.getByRole('combobox', { name: 'Rhythm' }), 'ARPEGGIO_UP')
+    expect(getAudioEngine().playSequence).toHaveBeenLastCalledWith(
+      [{ notes: [57, 60, 64], beats: 4, pattern: 'ARPEGGIO_UP' }], 90, expect.any(Object), expect.objectContaining({ loop: false }))
+    expect(screen.getByText('arp. ↑')).toBeInTheDocument()
+    await userEvent.click(screen.getByRole('button', { name: /^Play$/ }))
+    expect(vi.mocked(getAudioEngine().playSequence).mock.lastCall?.[0][0]).toEqual({ notes: [57, 60, 64], beats: 4, pattern: 'ARPEGGIO_UP' })
+  })
+
+  it('changes the mode, keeping the tonic when that key exists in the new mode', async () => {
+    await renderWorkspace()
+    await userEvent.selectOptions(screen.getByRole('combobox', { name: 'Mode' }), 'DORIAN')
+    await waitFor(() => expect(vi.mocked(theoryApi.analyze).mock.lastCall?.[0]).toEqual({ tonic: 'A', mode: 'DORIAN' }))
+    await userEvent.selectOptions(screen.getByRole('combobox', { name: 'Mode' }), 'MAJOR')
+    await waitFor(() => expect(vi.mocked(theoryApi.analyze).mock.lastCall?.[0]).toEqual({ tonic: 'C', mode: 'MAJOR' }))
+    expect(screen.getByRole('option', { name: 'Dorian' })).toBeInTheDocument()
+    expect(screen.queryByRole('option', { name: 'Lydian' })).not.toBeInTheDocument() // no tonics in this catalog
+  })
+
+  it('suggests a better-fitting key without changing it until asked', async () => {
+    await renderWorkspace()
+    // the default mock agrees with the current key (A minor): no hint
+    await waitFor(() => expect(theoryApi.detectKey).toHaveBeenCalled())
+    expect(screen.queryByText(/These chords sound like/)).not.toBeInTheDocument()
+
+    vi.mocked(theoryApi.detectKey).mockResolvedValue({
+      candidates: [{ key: { tonic: 'C', mode: 'MAJOR' }, label: 'C major', correlation: 0.9 }],
+      confidence: 'STRONG', explanation: 'C major fits best.',
+    })
+    await userEvent.click(screen.getByRole('button', { name: 'Duplicate chord' })) // any edit re-runs detection
+    await userEvent.click(await screen.findByRole('button', { name: 'Use C major' }, { timeout: 3000 }))
+    await waitFor(() => expect(vi.mocked(theoryApi.analyze).mock.lastCall?.[0]).toEqual({ tonic: 'C', mode: 'MAJOR' }))
+  })
+
+  it('transposes the key and every chord as one undoable step', async () => {
+    await renderWorkspace()
+    await userEvent.click(screen.getByRole('button', { name: 'Transpose up a semitone' }))
+    await screen.findByRole('button', { name: 'Chord 1: Am+1' })
+    expect(theoryApi.transpose).toHaveBeenCalledWith({ tonic: 'A', mode: 'MINOR' }, expect.any(Array), 1)
+    expect(screen.getByRole('combobox', { name: 'Key tonic' })).toHaveValue('E')
+    await userEvent.click(screen.getByRole('button', { name: 'Undo' }))
+    expect(screen.getByRole('button', { name: 'Chord 1: Am' })).toBeInTheDocument()
+    expect(screen.getByRole('combobox', { name: 'Key tonic' })).toHaveValue('A')
+  })
+
+  it('plays from the selected chord with Shift+Space and from the toolbar', async () => {
+    await renderWorkspace()
+    await userEvent.click(screen.getByRole('button', { name: 'Chord 3: C/G' }))
+    await userEvent.keyboard('{Shift>} {/Shift}')
+    expect(vi.mocked(getAudioEngine().playSequence).mock.lastCall?.[0]).toHaveLength(2)
+    vi.mocked(getAudioEngine().playSequence).mockClear()
+    await userEvent.click(screen.getByRole('button', { name: 'Stop playback' }))
+    expect(getAudioEngine().stop).toHaveBeenCalled()
+    await userEvent.click(screen.getByRole('button', { name: 'Chord 2: F/A' }))
+    await userEvent.click(screen.getByRole('button', { name: 'Play from this chord' }))
+    expect(vi.mocked(getAudioEngine().playSequence).mock.lastCall?.[0]).toHaveLength(3)
+  })
+
+  it('can play a chord when its measure is clicked, as a setting', async () => {
+    await renderWorkspace()
+    await userEvent.click(screen.getByRole('button', { name: 'Chord 2: F/A' }))
+    expect(getAudioEngine().playChord).not.toHaveBeenCalled()
+    await userEvent.click(screen.getByRole('button', { name: 'Settings' }))
+    await userEvent.click(screen.getByRole('button', { name: 'Selects and plays it' }))
+    await userEvent.click(screen.getByRole('button', { name: 'Close settings' }))
+    await userEvent.click(screen.getByRole('button', { name: 'Chord 4: G' }))
+    expect(getAudioEngine().playChord).toHaveBeenCalledWith([55, 59, 62])
+  })
+
+  it('lists the keyboard shortcuts when ? is pressed', async () => {
+    await renderWorkspace()
+    await userEvent.keyboard('?')
+    expect(screen.getByRole('dialog', { name: 'Keyboard shortcuts' })).toBeInTheDocument()
+    expect(screen.getByText('Transpose everything by a semitone')).toBeInTheDocument()
+    await userEvent.keyboard('{Escape}')
+    expect(screen.queryByRole('dialog', { name: 'Keyboard shortcuts' })).not.toBeInTheDocument()
+  })
+
+  it('switches the sound from the transport and remembers it', async () => {
+    await renderWorkspace()
+    await userEvent.selectOptions(screen.getByRole('combobox', { name: 'Sound' }), 'vibes')
+    await waitFor(() => expect(getAudioEngine().setInstrument).toHaveBeenLastCalledWith('vibes'))
+    expect(JSON.parse(localStorage.getItem('harmony-lab.settings') ?? '{}').instrument).toBe('vibes')
   })
 
   it('shows an understandable error when saving fails', async () => {

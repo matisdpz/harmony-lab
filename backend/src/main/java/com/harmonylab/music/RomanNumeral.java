@@ -29,7 +29,7 @@ public record RomanNumeral(int degree, int alteration, ChordQuality quality, int
     public String format() {
         String prefix = alteration < 0 ? "b".repeat(-alteration) : "#".repeat(Math.max(0, alteration));
         String numeral = NUMERALS[degree];
-        boolean upper = quality.hasMajorThird() || quality.family() == ChordQuality.Family.SUSPENDED;
+        boolean upper = quality.hasMajorThird() || quality.isDominantType() || quality.family() == ChordQuality.Family.SUSPENDED;
         String base = upper ? numeral : numeral.toLowerCase();
         String suffix = switch (quality) {
             case MAJOR, MINOR -> "";
@@ -41,8 +41,19 @@ public record RomanNumeral(int degree, int alteration, ChordQuality quality, int
             case MINOR7, DOMINANT7 -> "7";
             case HALF_DIMINISHED7 -> "ø7";
             case DIMINISHED7 -> "°7";
+            case MINOR_MAJOR7 -> "maj7";
+            case AUGMENTED_MAJOR7 -> "+maj7";
             case MAJOR6, MINOR6 -> "6";
             case ADD9, MINOR_ADD9 -> "add9";
+            case DOMINANT9, MINOR9 -> "9";
+            case MAJOR9 -> "maj9";
+            case DOMINANT11, MINOR11 -> "11";
+            case DOMINANT13 -> "13";
+            case DOMINANT7_FLAT9 -> "7b9";
+            case DOMINANT7_SHARP9 -> "7#9";
+            case DOMINANT7_SHARP11 -> "7#11";
+            case DOMINANT7_FLAT13 -> "7b13";
+            case ALTERED -> "7alt";
         };
         return prefix + base + applyFigures(suffix);
     }

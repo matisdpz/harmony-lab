@@ -9,6 +9,7 @@ import java.util.List;
  * @param notesFromBass chord tones starting from the bass
  * @param voicing       concrete MIDI notes, or null when no voicing was requested
  * @param voicingNotes  spelled notes with octaves for the voicing (C4 = middle C)
+ * @param pattern       playback pattern of a saved chord, or null outside projects
  */
 public record ChordView(
         String symbol,
@@ -23,5 +24,6 @@ public record ChordView(
         List<IntervalView> intervals,
         List<Integer> voicing,
         List<String> voicingNotes,
-        Integer durationBeats) {
+        Integer durationBeats,
+        String pattern) {
 }

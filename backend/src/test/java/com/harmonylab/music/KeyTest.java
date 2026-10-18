@@ -58,6 +58,7 @@ class KeyTest {
     void rejectsTheoreticalKeys() {
         assertThatThrownBy(() -> Key.of("G#", Mode.MAJOR)).isInstanceOf(InvalidMusicInputException.class)
                 .hasMessageContaining("theoretical key");
-        assertThatThrownBy(() -> Mode.fromId("dorian")).isInstanceOf(InvalidMusicInputException.class);
+        assertThatThrownBy(() -> Mode.fromId("aeolian-dominant")).isInstanceOf(InvalidMusicInputException.class)
+                .hasMessageContaining("DORIAN");
     }
 }

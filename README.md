@@ -18,14 +18,16 @@ involved, and every analysis statement is derived from the actual notes.
 
 | Area | What you can do |
 |---|---|
-| **Harmony Workspace** | Add chords by symbol (`Dm7`, `G/B`, `F#m7b5`) or from pickers; select, edit root/quality/inversion/voicing style, shift octaves, set beats, reorder (buttons, drag & drop, `Alt+←/→`), duplicate, delete, clear, undo/redo; play a chord or the whole progression with tempo, loop and position indicator; save/rename. |
+| **Harmony Workspace** | Add chords by symbol (`Dm7`, `G/B`, `F#m7b5`, `G13`, `C7alt`) or from pickers; select, edit root/quality/inversion/voicing style, shift octaves, set beats and a **rhythm** per chord (block, arpeggios, Alberti bass, repeated, bass and chord); reorder (buttons, drag & drop, `Alt+←/→`), duplicate, delete, clear, undo/redo; **transpose** everything by a semitone with correct spelling; play the progression or **from the selected chord**, with tempo, loop and a playhead; choose the **sound** (grand piano samples, electric piano, organ, pad, plucked strings, vibraphone); save/rename. A quiet hint appears when the chords clearly sound like another key. |
+| **MIDI** | Connect a **MIDI keyboard** (Web MIDI): notes sound with the chosen instrument, the sustain pedal works, the on-screen keyboards show what you play, a held chord is named and can be added in one click, and the Explorer's identification mode reads it. **Export** the progression as a `.mid` file (with each chord's rhythm) and **import** a `.mid` file as chords. |
 | **Piano keyboard** | Data-driven highlights of the selected (or currently sounding) voicing, root vs. chord tones, note labels in the chord's own spelling, click-to-audition, 2–5 visible octaves with octave shifting. |
-| **Chord Explorer** | Any root × 15 qualities: notes, interval structure, all inversions, relation to a chosen key, the key's diatonic triads and seventh chords, *identify a chord from clicked keys* (with all ambiguous readings), add to progression. |
-| **Progression Analyzer** | Roman numerals, diatonic / harmonic-minor / secondary-dominant / borrowed / chromatic classification, conventional functions (with "tentative" flags), root motion, common tones, cadence detection, measured voice-leading metrics, and observations labelled **Fact** or **Heuristic**. |
-| **Voice Leading Explorer** | For any adjacent pair: ranked voicings of the next chord with costs, explanations and a motion diagram; audition and apply. A dynamic-programming optimiser re-voices the whole progression. |
+| **Chord Explorer** | Any root × 28 qualities (triads, sevenths, sixths, suspended, added, **9/11/13** and **altered dominants**): notes, interval structure, all inversions, relation to a chosen key, the key's diatonic triads and seventh chords, *identify a chord from clicked keys* (with all ambiguous readings), add to progression. |
+| **Progression Analyzer** | A **key estimate** (Krumhansl–Schmuckler, with the three likeliest keys and their correlation), Roman numerals, diatonic / harmonic-minor / secondary-dominant / borrowed / chromatic classification, conventional functions (with "tentative" flags), root motion, common tones, cadence detection, measured voice-leading metrics, and observations labelled **Fact** or **Heuristic**. |
+| **Voice Leading Explorer** | For any adjacent pair: ranked voicings of the next chord with costs, explanations and a motion diagram; audition and apply. A dynamic-programming optimiser re-voices the whole progression. Optional **four-voice writing** doubles the root of triads. |
 | **Suggestions** | Ranked, explained alternatives for the selected chord under four objectives: smooth voice leading, stronger resolution, diatonic alternatives, more harmonic colour. Audition or replace with one click. Says so when nothing scores well. |
 | **Alternatives & comparison** | Whole-progression alternatives (re-voiced, or best single change per objective) and a metrics table comparing the current version, the last saved version and an alternative. |
-| **Improvisation** | Loop a preset progression (pop, 50s, jazz ii–V–I, canon, 12-bar blues, minor pop, Andalusian, minor ii–V–i, minor blues — realised in any key), your workspace progression or one you type (`Dm7 G7 Cmaj7`, kept in this browser). For the chord that is sounding, the keyboard marks the root, the chord tones, the safe scale notes (a small dot) and the **tension notes in red** (avoid notes, ♭9/♯9/♭13 on dominants, blue notes), with a reason for each. The next chord is shown beside the current one. Play along with the mouse or the computer keyboard (`A W S E D F T G Y H U J K`, `Z`/`X` octave). |
+| **Keys and modes** | Major, natural / harmonic / melodic minor, and the Dorian, Phrygian, Lydian, Mixolydian and Locrian modes, everywhere a key is chosen. |
+| **Improvisation** | Loop a preset progression (pop, 50s, jazz ii–V–I, canon, 12-bar blues, minor pop, Andalusian, minor ii–V–i, minor blues, and one vamp per mode — realised in any key), with an optional **one-bar count-in** and **metronome**,, your workspace progression or one you type (`Dm7 G7 Cmaj7`, kept in this browser). For the chord that is sounding, the keyboard marks the root, the chord tones, the safe scale notes (a small dot) and the **tension notes in red** (avoid notes, ♭9/♯9/♭13 on dominants, blue notes), with a reason for each. The next chord is shown beside the current one. Play along with the mouse or the computer keyboard (`A W S E D F T G Y H U J K`, `Z`/`X` octave). |
 | **Saved Projects** | Create, list, open, update, rename, duplicate, delete. Optimistic locking prevents silently overwriting changes made in another tab; unsaved changes are indicated and confirmed before being discarded. |
 
 ## 2. Screenshots
@@ -96,7 +98,7 @@ harmony-lab/
 
 | Layer | Choice |
 |---|---|
-| Frontend | React 19, TypeScript 6 (strict), Vite 8, React Router 8, Tone.js 15, lucide-react, CSS Modules; self-hosted fonts via Fontsource (Source Serif 4, Atkinson Hyperlegible Next, Noto Music) |
+| Frontend | React 19, TypeScript 6 (strict), Vite 8, React Router 8, Tone.js 15, @tonejs/midi, lucide-react, CSS Modules; Web MIDI API; Salamander Grand Piano samples (CC-BY 3.0, `frontend/public/samples/piano`); self-hosted fonts via Fontsource (Source Serif 4, Atkinson Hyperlegible Next, Noto Music) |
 | Frontend tests | Vitest 5, React Testing Library, user-event, jsdom; oxlint |
 | Backend | Java 21, Spring Boot 4.1 (Web MVC, Validation, Data JPA / Hibernate 7), Flyway, PostgreSQL 17, springdoc-openapi 3.1 |
 | Backend tests | JUnit 6 (Jupiter), AssertJ, Mockito, Spring MockMvc, Testcontainers 2 |
@@ -209,9 +211,11 @@ Main endpoints:
 | `POST` | `/api/projects/{id}/duplicate` | Duplicate |
 | `GET` | `/api/theory/catalog` | Qualities, roots, keys, objectives |
 | `POST` | `/api/theory/chords/resolve` · `/parse` · `/identify` | Build, parse or identify chords |
-| `GET` | `/api/theory/keys?tonic=Eb&mode=MAJOR` | Scale, signature, diatonic chords |
+| `GET` | `/api/theory/keys?tonic=Eb&mode=MAJOR` | Scale, signature, diatonic chords (any of the 9 modes) |
+| `POST` | `/api/theory/keys/detect` | Most likely major/minor keys of a progression, with correlations and confidence |
+| `POST` | `/api/theory/transpose` | Key and chords moved by −11…11 semitones, spelled with the fewest accidentals |
 | `POST` | `/api/theory/analyze` | Progression analysis |
-| `POST` | `/api/theory/voice-leading` · `/voice-leading/optimize` | Ranked voicings / whole-progression optimisation |
+| `POST` | `/api/theory/voice-leading` · `/voice-leading/optimize` | Ranked voicings / whole-progression optimisation (`fourVoices` doubles the root of triads) |
 | `POST` | `/api/theory/suggestions` · `/alternatives` | Suggestions / whole-progression alternatives |
 | `GET` | `/api/theory/presets?tonic=A&mode=MINOR` | Preset progressions realised and voiced in a key |
 | `POST` | `/api/theory/improvisation` | Per chord: voicing plus chord tones, safe notes and tension notes (from `chords` or `symbols`) |
@@ -262,23 +266,50 @@ traces are never returned; unexpected errors are logged server-side.
   and *Night*; a pinned choice sets `data-theme` on `<html>`, and a small inline script in `index.html`
   applies it before the first paint so there is no flash. The piano keyboard deliberately stays ivory and
   ebony in both themes, with the same role colours, because it represents a physical instrument.
+* **Extended chords and modes in the same model.** Extended and altered qualities are just more interval
+  lists (with compound intervals such as the ♭9 and ♯11), so spelling, inversions, identification and Roman
+  numerals work unchanged. Code that needs "a dominant" asks `ChordQuality.isDominantType()` (7, 9, 11, 13 and
+  altered) instead of testing for one quality. Modes are scales: `Mode.isTonal()` decides whether
+  tonic/predominant/dominant labels apply (major and the minors) or only the tonic is labelled (church modes),
+  and `Mode.signatureMode()` gives harmonic and melodic minor the natural minor's key signature.
+* **Key detection is a hint.** Krumhansl–Schmuckler correlates the duration-weighted pitch-class profile with the
+  Krumhansl–Kessler major and minor profiles. Relative keys share every note, so when the two best candidates
+  are relatives and close, the confidence is reported as weak and the hint is not shown; the key is never
+  changed without a click.
+* **Transposition** moves every root by the same *spelled* interval as the tonic (A minor → B♭ minor turns F into
+  G♭, not F♯), and each voicing by the smaller of the two directions so repeated transposition does not drift.
+* **Rhythm and sound are presentation.** Playback patterns are pure functions (`model/rhythm.ts`) shared by audio
+  playback and MIDI export; the pattern is stored with each saved chord, but the theory engine ignores it.
+  Instruments sit behind one small `Voice` interface; only the grand piano uses samples (2 MB, served
+  locally so the app works offline).
+* **MIDI import** cuts the file into beats, keeps notes that sound for at least half a beat (falling back to
+  every note in the surrounding two beats for broken chords such as an Alberti bass), merges equal beats and
+  asks the identifier for each distinct note set.
 * **Deliberately not included:** authentication, microservices, caching layers or message brokers. None
   is needed for a single-user local tool.
 
 ## 14. Known limitations
 
 * **Single user.** No accounts or authorisation; do not expose the API publicly.
-* **Theory scope.** Major and natural-minor keys (harmonic minor is recognised for V/vii° in minor).
-  15 chord qualities, without 9ths/11ths/13ths beyond add9, altered dominants or slash chords whose
-  bass is not a chord tone. Chord identification only reports exact pitch-class matches (no omitted 5ths).
-  No automatic key detection.
+* **Theory scope.** Nine modes and 28 chord qualities. No slash chords whose bass is not a chord tone, no
+  polychords, and extended chords contain all their listed tones (a voicing cannot omit the fifth). Chord
+  identification only reports exact pitch-class matches. In church modes, chords other than the tonic get
+  no functional label by design.
+* **Key detection** only considers major and natural minor keys and is unreliable for very short
+  progressions; relative keys are often ambiguous.
+* **MIDI.** Web MIDI works in Chromium-based browsers and Firefox (with a permission prompt), not in Safari.
+  Import assumes a steady beat from the file's first tempo and recognises chords, not melodies; beats that
+  form no supported chord are merged into the previous chord. Export is a single piano track in 4/4.
 * **Analysis.** Function labels follow textbook conventions and are marked tentative where context
   decides (iii, VI, VII in minor). Secondary dominants are recognised for V/V7 types only (not vii°/x).
-* **Voicings.** Each chord tone appears exactly once (no doublings), at most two octaves wide. The
-  voice-leading weights are hand-tuned, not learned or perceptually validated.
-* **Sound.** A synthesised FM voice, not a sampled piano. Timing depends on the browser's audio clock;
-  very dense loops on slow machines may glitch. The note duration is fixed at about 96% of each
-  chord's length (no sustain pedal or dynamics).
+* **Voicings.** Generated candidates use each tone once, except that four-voice writing doubles the root of
+  triads (no other doubling rules, e.g. avoiding a doubled leading tone). Open and drop-2 voicings of six-note
+  chords can be too wide for the register and are then refused with a message. The voice-leading weights are
+  hand-tuned, not learned or perceptually validated.
+* **Sound.** One sampled instrument (piano, one sample every minor third, pitch-shifted in between); the
+  others are simple synthesis. Timing depends on the browser's audio clock; very dense loops on slow
+  machines may glitch. Rhythm patterns are fixed figures in eighth notes or beats (no swing, no dynamics
+  beyond accents). The first play waits for the piano samples to download.
 * **Improvisation guide** follows one convention (chord scale = key scale adjusted to the chord's tones;
   avoid notes, altered dominant tensions and blue notes as "tension"). Other approaches (modes per chord,
   pentatonics, bebop scales) are not offered. Custom improvisation loops are stored in the browser only.
@@ -286,10 +317,10 @@ traces are never returned; unexpected errors are logged server-side.
 
 ## 15. Future improvements
 
-* Harmonic/melodic minor and modal keys; extended and altered chords; doubled voicings for four-part writing.
-* Automatic key detection (e.g. Krumhansl–Schmuckler profiles) as an *optional* hint.
-* MIDI export/import and Web MIDI input from a real keyboard.
-* Sampled piano option, per-chord rhythm patterns and arpeggiation.
+* Classical doubling rules for four-part writing (leading tone, 6/4 chords) and voice-range limits per voice.
+* Modal key detection and per-chord scale choices (modes, pentatonics) in the improvisation guide.
+* Swing and custom rhythm patterns; dynamics; more sampled instruments.
+* MIDI import with tempo changes and melody/chord separation.
 * Version history per project (snapshots) with diff and restore.
 * Optional authentication and per-user projects if multi-user hosting is ever needed.
 * End-to-end browser tests (Playwright) in CI.
@@ -305,4 +336,10 @@ The following were run successfully while preparing this repository:
   chords (keyboard highlights checked), undo, add a chord by symbol, play and stop (Tone.js started without
   errors), find voicings, load alternatives, save, open each page, delete via the UI, check the mobile layout
   for horizontal overflow. No console errors.
+* For the sound, MIDI, extended-chord, mode, key-detection and ergonomics features: scripted headless-Chromium
+  checks of every sound and rhythm (piano samples load locally), MIDI export then re-import of the same file
+  (including an Alberti-bass chord), extended chords and four-voice writing, every mode in the key picker and the
+  Improvisation presets, the key hint, transposition, the count-in, the shortcut list, dark theme and mobile
+  width. The Web MIDI keyboard path is covered by tests with a simulated device; it was not tried with physical
+  hardware in this environment.
 * The GitHub Actions workflow (frontend checks, backend tests with Testcontainers, Docker image builds) passes on GitHub.

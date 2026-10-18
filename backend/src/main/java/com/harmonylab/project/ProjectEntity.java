@@ -34,7 +34,7 @@ public class ProjectEntity {
     @Column(name = "key_tonic", nullable = false, length = 3)
     private String keyTonic;
 
-    @Column(name = "key_mode", nullable = false, length = 10)
+    @Column(name = "key_mode", nullable = false, length = 20)
     private String keyMode;
 
     @Column(name = "tempo_bpm", nullable = false)

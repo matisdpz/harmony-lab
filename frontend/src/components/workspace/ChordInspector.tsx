@@ -1,4 +1,6 @@
 import { ArrowDown, ArrowUp, MousePointerClick, Play } from 'lucide-react'
+import { QualityOptions } from '../common/QualityOptions'
+import { PATTERNS, type PlaybackPattern } from '../../model/rhythm'
 import { formatMusic, formatMusicProse } from '../../model/notes'
 import type { VoicingStyle } from '../../api/types'
 import { useWorkspace } from '../../state/WorkspaceProvider'
@@ -8,11 +10,12 @@ import { EmptyState } from '../common/Status'
 import { FunctionBadge, CategoryBadge } from '../analysis/Badges'
 import styles from './Inspector.module.css'
 
-const INVERSION_LABELS = ['Root', '1st', '2nd', '3rd']
+const INVERSION_LABELS = ['Root', '1st', '2nd', '3rd', '4th', '5th']
 const STYLES: { id: VoicingStyle; label: string }[] = [
   { id: 'CLOSE', label: 'Close' },
   { id: 'OPEN', label: 'Open' },
   { id: 'DROP2', label: 'Drop 2' },
+  { id: 'FOUR_PART', label: 'Four-part' },
 ]
 const DURATIONS = [1, 2, 3, 4, 6, 8]
 
@@ -95,7 +98,7 @@ export function ChordInspector() {
           <label className="field" style={{ flex: 1 }}>
             <span className="field-label">Quality</span>
             <select className="select" aria-label="Quality" value={chord.quality} onChange={(e) => void workspace.editChord(chord.id, { quality: e.target.value })}>
-              {catalog.qualities.map((q) => <option key={q.id} value={q.id}>{q.name}{q.suffix ? ` (${q.suffix})` : ''}</option>)}
+              <QualityOptions qualities={catalog.qualities} />
             </select>
           </label>
         </div>
@@ -127,6 +130,20 @@ export function ChordInspector() {
               <button type="button" onClick={() => workspace.shiftOctave(chord.id, 1)} aria-label="Octave up"><ArrowUp size={13} /></button>
             </div>
           </div>
+          <label className="field">
+            <span className="field-label">Rhythm</span>
+            <select className="select" aria-label="Rhythm" value={chord.pattern}
+                    title={PATTERNS.find((p) => p.id === chord.pattern)?.description}
+                    onChange={(e) => {
+                      const pattern = e.target.value as PlaybackPattern
+                      workspace.setPattern(chord.id, pattern)
+                      // Let the change be heard straight away.
+                      void audio.playSequence([{ notes: chord.voicing, beats: chord.durationBeats, pattern }],
+                        workspace.content.tempoBpm, { owner: 'rhythm-preview' })
+                    }}>
+              {PATTERNS.map((p) => <option key={p.id} value={p.id}>{p.label}</option>)}
+            </select>
+          </label>
           <label className="field">
             <span className="field-label">Beats</span>
             <select className="select" aria-label="Beats" value={chord.durationBeats}

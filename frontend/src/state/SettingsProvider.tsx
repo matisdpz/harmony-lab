@@ -1,3 +1,4 @@
+import { DEFAULT_INSTRUMENT, isInstrumentId, type InstrumentId } from '../audio/instruments'
 import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from 'react'
 
 export type LabelMode = 'chord' | 'all' | 'none'
@@ -9,6 +10,16 @@ export interface Settings {
   loop: boolean
   /** 'auto' follows the operating system; the other two pin the palette. */
   theme: Theme
+  /** The sound used for every playback. */
+  instrument: InstrumentId
+  /** Reconnect the MIDI keyboard on the next visit. */
+  midiEnabled: boolean
+  /** Clicking a measure also plays its chord. */
+  auditionOnSelect: boolean
+  /** One bar of clicks before an improvisation loop starts. */
+  countIn: boolean
+  /** A click on every beat during improvisation. */
+  metronome: boolean
 }
 
 interface SettingsApi extends Settings {
@@ -16,14 +27,16 @@ interface SettingsApi extends Settings {
 }
 
 const STORAGE_KEY = 'harmony-lab.settings'
-const DEFAULTS: Settings = { labelMode: 'chord', volumeDb: -8, loop: false, theme: 'auto' }
+const DEFAULTS: Settings = { labelMode: 'chord', volumeDb: -8, loop: false, theme: 'auto', instrument: DEFAULT_INSTRUMENT, midiEnabled: false, auditionOnSelect: false, countIn: true, metronome: false }
 
 const SettingsContext = createContext<SettingsApi | null>(null)
 
 function load(): Settings {
   try {
     const raw = window.localStorage.getItem(STORAGE_KEY)
-    return raw ? { ...DEFAULTS, ...(JSON.parse(raw) as Partial<Settings>) } : DEFAULTS
+    if (!raw) return DEFAULTS
+    const saved = { ...DEFAULTS, ...(JSON.parse(raw) as Partial<Settings>) }
+    return isInstrumentId(saved.instrument) ? saved : { ...saved, instrument: DEFAULT_INSTRUMENT, midiEnabled: false }
   } catch {
     return DEFAULTS // storage can be unavailable (private mode); settings then last for the session
   }

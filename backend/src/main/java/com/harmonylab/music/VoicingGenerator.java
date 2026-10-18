@@ -26,6 +26,7 @@ public final class VoicingGenerator {
             case CLOSE -> closeOffsets(chord.tonesFromBass());
             case OPEN -> openOffsets(chord.tonesFromBass());
             case DROP2 -> drop2Offsets(chord);
+            case FOUR_PART -> fourPartOffsets(chord);
         };
         int top = offsets.stream().max(Integer::compare).orElseThrow();
         int bassPc = chord.bass().pitchClass().value();
@@ -58,7 +59,18 @@ public final class VoicingGenerator {
      * @return candidates in ascending lexicographic order (deterministic); empty if none fit
      */
     public static List<Voicing> candidates(Chord chord, Register register, boolean anyInversion) {
+        return candidates(chord, register, anyInversion, false);
+    }
+
+    /**
+     * @param fourVoices when true, triads get a fourth voice that doubles the root (the textbook default in
+     *                   four-part writing); chords with four or more tones are unchanged
+     */
+    public static List<Voicing> candidates(Chord chord, Register register, boolean anyInversion, boolean fourVoices) {
         List<Integer> pitchClasses = new ArrayList<>(chord.pitchClasses());
+        if (fourVoices && chord.size() == 3) {
+            pitchClasses.add(chord.root().pitchClass().value());
+        }
         List<List<Integer>> options = new ArrayList<>();
         for (int pc : pitchClasses) {
             List<Integer> placements = new ArrayList<>();
@@ -72,6 +84,12 @@ public final class VoicingGenerator {
         int bassPc = chord.bass().pitchClass().value();
         List<Voicing> result = new ArrayList<>();
         collect(options, 0, new ArrayList<>(), result, anyInversion ? -1 : bassPc);
+        if (pitchClasses.size() > chord.pitchClasses().size()) {
+            // the doubled tone was placed twice; keep each set of notes once
+            List<Voicing> distinct = new ArrayList<>(new java.util.LinkedHashSet<>(result));
+            result.clear();
+            result.addAll(distinct);
+        }
         result.sort(Comparator.comparing(Voicing::notes, VoicingGenerator::compareLexicographically));
         return List.copyOf(result);
     }
@@ -86,6 +104,9 @@ public final class VoicingGenerator {
             return;
         }
         for (int midi : options.get(index)) {
+            if (chosen.contains(midi)) {
+                continue; // a doubled tone must sit in a different octave
+            }
             chosen.add(midi);
             collect(options, index + 1, chosen, result, requiredBassPc);
             chosen.removeLast();
@@ -117,6 +138,32 @@ public final class VoicingGenerator {
             }
         }
         return Integer.compare(a.size(), b.size());
+    }
+
+    /**
+     * Bass alone, upper voices in close position starting at least a sixth above it. For triads the upper
+     * voices are all three tones (so the bass's pitch class is doubled); otherwise they are the tones other
+     * than the bass. Of the possible lowest upper voices, the one giving the most compact stack is used.
+     */
+    private static List<Integer> fourPartOffsets(Chord chord) {
+        List<NoteName> fromBass = chord.tonesFromBass();
+        List<NoteName> upper = chord.size() == 3 ? fromBass : fromBass.subList(1, fromBass.size());
+        int bassPc = fromBass.getFirst().pitchClass().value();
+        List<Integer> best = null;
+        for (NoteName lowestUpper : upper) {
+            // true close position: from the lowest upper voice, the others in ascending pitch order
+            int fromPc = lowestUpper.pitchClass().value();
+            List<NoteName> rotated = upper.stream()
+                    .sorted(java.util.Comparator.comparingInt(t -> Math.floorMod(t.pitchClass().value() - fromPc, 12)))
+                    .toList();
+            int start = 9 + Math.floorMod(rotated.getFirst().pitchClass().value() - bassPc - 9, 12);
+            List<Integer> offsets = new ArrayList<>(List.of(0));
+            closeOffsets(rotated).forEach(o -> offsets.add(start + o));
+            if (best == null || offsets.getLast() < best.getLast()) {
+                best = offsets;
+            }
+        }
+        return best;
     }
 
     /** Stacks the tones upward, each one at the nearest position above the previous tone. */
@@ -160,7 +207,14 @@ public final class VoicingGenerator {
         rotated.addAll(fromBass.subList(0, start));
         List<Integer> close = closeOffsets(rotated);
         List<Integer> dropped = new ArrayList<>(close);
-        dropped.set(n - 2, close.get(n - 2) - 12);
+        // Drop the bass tone below every other voice. One octave is enough for chords that fit in an octave;
+        // chords with a ninth or wider span need two.
+        int lowestOther = n - 2 == 0 ? close.get(1) : close.getFirst();
+        int bass = close.get(n - 2) - 12;
+        while (bass >= lowestOther) {
+            bass -= 12;
+        }
+        dropped.set(n - 2, bass);
         int min = dropped.stream().min(Integer::compare).orElseThrow();
         return dropped.stream().map(o -> o - min).sorted().toList();
     }

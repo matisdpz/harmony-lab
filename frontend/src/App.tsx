@@ -7,6 +7,7 @@ import { ProjectsProvider } from './state/ProjectsProvider'
 import { WorkspaceProvider } from './state/WorkspaceProvider'
 import { SettingsProvider } from './state/SettingsProvider'
 import { AudioProvider } from './audio/AudioProvider'
+import { MidiProvider } from './state/MidiProvider'
 import { AppShell } from './components/layout/AppShell'
 import { ErrorBanner, Spinner } from './components/common/Status'
 import { WorkspacePage } from './pages/WorkspacePage'
@@ -55,9 +56,11 @@ export function AppProviders({ children }: { children: ReactNode }) {
           <CatalogProvider>
             <BackendGate>
               <AudioProvider>
-                <ProjectsProvider>
-                  <WorkspaceProvider>{children}</WorkspaceProvider>
-                </ProjectsProvider>
+                <MidiProvider>
+                  <ProjectsProvider>
+                    <WorkspaceProvider>{children}</WorkspaceProvider>
+                  </ProjectsProvider>
+                </MidiProvider>
               </AudioProvider>
             </BackendGate>
           </CatalogProvider>

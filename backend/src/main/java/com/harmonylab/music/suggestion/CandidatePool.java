@@ -41,12 +41,14 @@ public final class CandidatePool {
             NoteName leadingTone = key.tonic().transpose(Interval.MAJOR_SEVENTH);
             add(entries, seen, new Chord(dominant, ChordQuality.MAJOR, 0), CandidateSource.HARMONIC_MINOR);
             add(entries, seen, new Chord(dominant, ChordQuality.DOMINANT7, 0), CandidateSource.HARMONIC_MINOR);
+            // V7b9: the flat ninth is the minor key's own sixth degree, the classic minor-key dominant colour
+            add(entries, seen, new Chord(dominant, ChordQuality.DOMINANT7_FLAT9, 0), CandidateSource.HARMONIC_MINOR);
             add(entries, seen, new Chord(leadingTone, ChordQuality.DIMINISHED7, 0), CandidateSource.HARMONIC_MINOR);
         }
         for (int degree = 2; degree <= 7; degree++) {
             Chord target = key.diatonicChord(degree, false);
-            if (target.quality() == ChordQuality.DIMINISHED) {
-                continue;
+            if (target.quality() == ChordQuality.DIMINISHED || target.quality() == ChordQuality.AUGMENTED) {
+                continue; // diminished and augmented triads are not tonicised in common practice
             }
             NoteName root = target.root().transpose(Interval.PERFECT_FIFTH);
             add(entries, seen, new Chord(root, ChordQuality.DOMINANT7, 0), CandidateSource.SECONDARY_DOMINANT);
@@ -62,8 +64,10 @@ public final class CandidatePool {
         }
         for (Chord triad : key.diatonicChords(false)) {
             ChordQuality[] variants = triad.quality() == ChordQuality.MAJOR
-                    ? new ChordQuality[]{ChordQuality.SUS2, ChordQuality.SUS4, ChordQuality.ADD9, ChordQuality.MAJOR6}
-                    : new ChordQuality[]{ChordQuality.SUS2, ChordQuality.SUS4, ChordQuality.MINOR_ADD9};
+                    ? new ChordQuality[]{ChordQuality.SUS2, ChordQuality.SUS4, ChordQuality.ADD9, ChordQuality.MAJOR6,
+                            ChordQuality.MAJOR9, ChordQuality.DOMINANT9, ChordQuality.DOMINANT13}
+                    : new ChordQuality[]{ChordQuality.SUS2, ChordQuality.SUS4, ChordQuality.MINOR_ADD9, ChordQuality.MINOR9,
+                            ChordQuality.MINOR11};
             if (triad.quality() == ChordQuality.DIMINISHED) {
                 continue;
             }

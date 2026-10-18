@@ -12,7 +12,7 @@ function isTyping(target: EventTarget | null): boolean {
  * Workspace keyboard shortcuts. Editing shortcuts are ignored while typing in a form field;
  * Ctrl/Cmd+S (save) works everywhere.
  */
-export function useWorkspaceShortcuts(togglePlay: () => void) {
+export function useWorkspaceShortcuts(togglePlay: (from?: number) => void) {
   const workspace = useWorkspace()
   const audio = useAudio()
 
@@ -41,10 +41,16 @@ export function useWorkspaceShortcuts(togglePlay: () => void) {
         event.preventDefault()
         workspace.duplicateChord(selected.id)
       } else if (event.key === ' ' && !mod) {
-        // Buttons also react to Space; only handle it when focus is not on a control.
-        if ((event.target as HTMLElement)?.tagName === 'BUTTON') return
+        // Buttons also react to Space; only handle it when focus is not on a control, except on a measure,
+        // where Space plays (as in a sequencer) instead of selecting the measure again.
+        const target = event.target as HTMLElement | null
+        if (target?.tagName === 'BUTTON' && target.dataset.spacePlays === undefined) return
         event.preventDefault()
-        togglePlay()
+        togglePlay(event.shiftKey && index >= 0 ? index : 0)
+      } else if ((event.key === 'ArrowUp' || event.key === 'ArrowDown') && event.altKey) {
+        if (chords.length === 0) return
+        event.preventDefault()
+        void workspace.transpose(event.key === 'ArrowUp' ? 1 : -1)
       } else if (event.key === 'ArrowLeft' || event.key === 'ArrowRight') {
         if (chords.length === 0) return
         const delta = event.key === 'ArrowLeft' ? -1 : 1

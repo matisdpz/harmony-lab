@@ -32,6 +32,12 @@ public final class ProgressionVoicer {
      */
     public static OptimizedProgression optimize(List<Chord> chords, Register register, boolean allowInversions,
                                                 Voicing fixedFirst) {
+        return optimize(chords, register, allowInversions, fixedFirst, false);
+    }
+
+    /** @param fourVoices double the root of triads (four-part writing), see {@link VoicingGenerator#candidates} */
+    public static OptimizedProgression optimize(List<Chord> chords, Register register, boolean allowInversions,
+                                                Voicing fixedFirst, boolean fourVoices) {
         if (chords == null || chords.isEmpty()) {
             throw new InvalidMusicInputException("The progression is empty; add at least one chord");
         }
@@ -39,7 +45,7 @@ public final class ProgressionVoicer {
         for (int i = 0; i < chords.size(); i++) {
             List<Voicing> options = i == 0 && fixedFirst != null
                     ? List.of(fixedFirst)
-                    : VoicingGenerator.candidates(chords.get(i), register, allowInversions);
+                    : VoicingGenerator.candidates(chords.get(i), register, allowInversions, fourVoices);
             if (options.isEmpty()) {
                 throw new InvalidMusicInputException("No voicing of " + chords.get(i).symbol()
                         + " (chord " + (i + 1) + ") fits in the selected register");

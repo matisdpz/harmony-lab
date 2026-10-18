@@ -1,4 +1,5 @@
 import { useEffect, useState, type ReactNode } from 'react'
+import { useMidi } from '../../state/MidiProvider'
 import { ChevronLeft, ChevronRight } from 'lucide-react'
 import type { VoicedChord } from '../../api/types'
 import { useAudio } from '../../audio/AudioProvider'
@@ -39,6 +40,7 @@ export function KeyboardPanel({
   highlights, title, actions, onKeyPress, follow, label = 'Piano keyboard', pitchClassHighlights, legend = 'chord',
 }: KeyboardPanelProps) {
   const audio = useAudio()
+  const midi = useMidi()
   const { labelMode } = useSettings()
   // Phones get two octaves so keys stay tappable; wider screens start with four (C2-B5).
   const narrow = typeof window !== 'undefined' && window.innerWidth < 700
@@ -118,7 +120,7 @@ export function KeyboardPanel({
         low={low}
         high={high}
         highlights={shown}
-        sounding={audio.soundingNotes}
+        sounding={midi.heldNotes.length ? [...audio.soundingNotes, ...midi.heldNotes] : audio.soundingNotes}
         labelMode={labelMode}
         onKeyPress={onKeyPress ?? ((midi) => void audio.playNote(midi))}
         label={label}

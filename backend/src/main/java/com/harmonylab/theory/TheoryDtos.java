@@ -43,7 +43,7 @@ public final class TheoryDtos {
     public record ChordResolveRequest(
             @NotBlank(message = "is required") @Size(max = 3) String root,
             @NotBlank(message = "is required") String quality,
-            @Min(value = 0, message = "must be between 0 and 3") @Max(value = 3, message = "must be between 0 and 3") Integer inversion,
+            @Min(value = 0, message = "must be between 0 and 5") @Max(value = 5, message = "must be between 0 and 5") Integer inversion,
             String style,
             @Valid RegisterDto register,
             @Size(min = 1, max = 8, message = "must contain between 1 and 8 notes") List<Integer> previousVoicing,
@@ -78,6 +78,29 @@ public final class TheoryDtos {
     }
 
     // ---- keys ----------------------------------------------------------------------------------------
+
+    public record TransposeRequest(
+            @NotNull(message = "is required") @Valid KeyDto key,
+            @NotEmpty(message = "must contain at least one chord") @Size(max = 64, message = "must contain at most 64 chords")
+            List<@Valid ChordInput> chords,
+            @NotNull(message = "is required") @Min(value = -11, message = "must be between -11 and 11")
+            @Max(value = 11, message = "must be between -11 and 11") Integer semitones) {
+    }
+
+    public record TransposeResponse(KeyDto key, String keyLabel, List<ChordView> chords) {
+    }
+
+    public record KeyDetectionRequest(
+            @NotEmpty(message = "must contain at least one chord") @Size(max = 64, message = "must contain at most 64 chords")
+            List<@Valid ChordInput> chords) {
+    }
+
+    public record KeyCandidateView(KeyDto key, String label, double correlation) {
+    }
+
+    /** @param confidence STRONG, MODERATE or WEAK */
+    public record KeyDetectionResponse(List<KeyCandidateView> candidates, String confidence, String explanation) {
+    }
 
     public record DiatonicChordView(int degree, String roman, String function, ChordView chord) {
     }
@@ -132,7 +155,8 @@ public final class TheoryDtos {
             @NotNull(message = "is required") @Valid ChordInput target,
             @Valid RegisterDto register,
             Boolean allowInversions,
-            @Min(value = 1, message = "must be between 1 and 20") @Max(value = 20, message = "must be between 1 and 20") Integer limit) {
+            @Min(value = 1, message = "must be between 1 and 20") @Max(value = 20, message = "must be between 1 and 20") Integer limit,
+            Boolean fourVoices) {
     }
 
     public record RankedVoicingView(int rank, ChordView chord, VoiceLeadingView voiceLeading, List<String> reasons) {
@@ -146,7 +170,8 @@ public final class TheoryDtos {
             List<@Valid ChordInput> chords,
             @Valid RegisterDto register,
             Boolean allowInversions,
-            Boolean keepFirstVoicing) {
+            Boolean keepFirstVoicing,
+            Boolean fourVoices) {
     }
 
     public record OptimizeResponse(List<ChordView> chords, int totalMovement, double totalCost) {

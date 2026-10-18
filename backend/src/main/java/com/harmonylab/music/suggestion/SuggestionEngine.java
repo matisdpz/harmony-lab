@@ -200,7 +200,7 @@ public final class SuggestionEngine {
         Chord target = next.chord();
         int targetRoot = target.root().pitchClass().value();
         int rootUp = candidate.root().pitchClass().semitonesUpTo(target.root().pitchClass());
-        boolean dominantQuality = candidate.quality() == ChordQuality.MAJOR || candidate.quality() == ChordQuality.DOMINANT7;
+        boolean dominantQuality = candidate.quality() == ChordQuality.MAJOR || candidate.quality().isDominantType();
         boolean leadingToneChord = (candidate.quality() == ChordQuality.DIMINISHED
                 || candidate.quality() == ChordQuality.DIMINISHED7 || candidate.quality() == ChordQuality.HALF_DIMINISHED7)
                 && rootUp == 1;
@@ -210,7 +210,7 @@ public final class SuggestionEngine {
             if (dominantQuality) {
                 score += 0.2;
             }
-            if (candidate.quality() == ChordQuality.DOMINANT7) {
+            if (candidate.quality().isDominantType() && candidate.quality().hasMajorThird()) {
                 score += 0.1;
                 reasons.add("The dominant seventh adds a tritone that resolves into " + target.symbol());
             }

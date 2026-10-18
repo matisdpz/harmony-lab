@@ -24,6 +24,12 @@ public final class VoiceLeadingOptimizer {
 
     public static List<RankedVoicing> rank(Voicing from, Chord target, Register register,
                                            boolean allowInversions, int limit) {
+        return rank(from, target, register, allowInversions, limit, false);
+    }
+
+    /** @param fourVoices double the root of triads (four-part writing), see {@link VoicingGenerator#candidates} */
+    public static List<RankedVoicing> rank(Voicing from, Chord target, Register register,
+                                           boolean allowInversions, int limit, boolean fourVoices) {
         if (from == null) {
             throw new InvalidMusicInputException("A starting voicing is required");
         }
@@ -33,7 +39,7 @@ public final class VoiceLeadingOptimizer {
         if (limit < 1) {
             throw new InvalidMusicInputException("The number of results must be at least 1");
         }
-        List<Voicing> candidates = VoicingGenerator.candidates(target, register, allowInversions);
+        List<Voicing> candidates = VoicingGenerator.candidates(target, register, allowInversions, fourVoices);
         if (candidates.isEmpty()) {
             throw new InvalidMusicInputException("No voicing of " + target.symbol()
                     + " fits in the register MIDI " + register.low() + "-" + register.high());

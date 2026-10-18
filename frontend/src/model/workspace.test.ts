@@ -30,6 +30,21 @@ describe('workspaceReducer', () => {
     expect(isDirty(state)).toBe(true)
   })
 
+  it('sets a playback pattern, keeps it when the chord is replaced, and saves it', () => {
+    let state = workspaceReducer(stateWith(am, f), { type: 'setPattern', id: 'f', pattern: 'ALBERTI' })
+    expect(isDirty(state)).toBe(true)
+    expect(workspaceReducer(state, { type: 'setPattern', id: 'f', pattern: 'ALBERTI' })).toBe(state)
+    state = workspaceReducer(state, { type: 'replaceChord', id: 'f', chord: C })
+    expect(state.content.chords[1].symbol).toBe(C.symbol)
+    expect(state.content.chords[1].pattern).toBe('ALBERTI')
+    expect(signature(state.content)).toContain('"pattern":"ALBERTI"')
+  })
+
+  it('reads unknown or missing saved patterns as block chords', () => {
+    expect(toSlot({ ...AM, pattern: 'SWING' }).pattern).toBe('BLOCK')
+    expect(toSlot({ ...AM, pattern: 'REPEATED' }).pattern).toBe('REPEATED')
+  })
+
   it('keeps the moved chord selected when reordering', () => {
     let state = workspaceReducer(stateWith(am, f, c, g), { type: 'select', id: 'f' })
     state = workspaceReducer(state, { type: 'moveChord', id: 'f', toIndex: 3 })

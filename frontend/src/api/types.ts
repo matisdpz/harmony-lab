@@ -1,7 +1,9 @@
 // Mirrors of the backend DTOs (see backend com.harmonylab.*.dto / *Dtos). Kept in one place so that
 // API contract changes surface as type errors.
 
-export type Mode = 'MAJOR' | 'MINOR'
+export type Mode =
+  | 'MAJOR' | 'MINOR' | 'HARMONIC_MINOR' | 'MELODIC_MINOR'
+  | 'DORIAN' | 'PHRYGIAN' | 'LYDIAN' | 'MIXOLYDIAN' | 'LOCRIAN'
 
 export interface KeyDto {
   tonic: string
@@ -34,6 +36,8 @@ export interface ChordView {
   voicing: number[] | null
   voicingNotes: string[] | null
   durationBeats: number | null
+  /** Playback pattern of a saved chord; null outside projects. */
+  pattern?: string | null
 }
 
 /** A chord with a concrete voicing, as used throughout the workspace. */
@@ -45,6 +49,7 @@ export interface ChordInput {
   inversion: number
   voicing?: number[]
   durationBeats?: number
+  pattern?: string
 }
 
 export interface QualityInfo {
@@ -65,14 +70,14 @@ export interface ObjectiveInfo {
 export interface Catalog {
   qualities: QualityInfo[]
   roots: string[]
-  keyTonics: Record<Mode, string[]>
+  keyTonics: Partial<Record<Mode, string[]>>
   objectives: ObjectiveInfo[]
   voicingStyles: VoicingStyle[]
   defaultRegister: RegisterDto
   pitchConvention: string
 }
 
-export type VoicingStyle = 'CLOSE' | 'OPEN' | 'DROP2'
+export type VoicingStyle = 'CLOSE' | 'OPEN' | 'DROP2' | 'FOUR_PART'
 export type Objective = 'SMOOTH_VOICE_LEADING' | 'STRONGER_RESOLUTION' | 'DIATONIC_ALTERNATIVES' | 'HARMONIC_COLOR'
 
 export interface InterpretationView {
@@ -292,4 +297,22 @@ export interface ImprovisationResponse {
   key: string
   chords: { chord: VoicedChord; guide: GuideNoteView[] }[]
   legend: string
+}
+
+export interface KeyCandidateView {
+  key: KeyDto
+  label: string
+  correlation: number
+}
+
+export interface KeyDetectionResponse {
+  candidates: KeyCandidateView[]
+  confidence: 'STRONG' | 'MODERATE' | 'WEAK'
+  explanation: string
+}
+
+export interface TransposeResponse {
+  key: KeyDto
+  keyLabel: string
+  chords: VoicedChord[]
 }

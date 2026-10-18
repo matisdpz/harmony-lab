@@ -12,6 +12,9 @@ import com.harmonylab.music.ChordQuality;
 import com.harmonylab.music.ChordSymbol;
 import com.harmonylab.music.InvalidMusicInputException;
 import com.harmonylab.music.Key;
+import com.harmonylab.music.Transposer;
+import com.harmonylab.music.analysis.KeyDetector;
+import com.harmonylab.api.dto.KeyDto;
 import com.harmonylab.music.Mode;
 import com.harmonylab.music.Note;
 import com.harmonylab.music.NoteName;
@@ -55,9 +58,34 @@ import java.util.Map;
 public class TheoryService {
 
     static final List<String> ROOTS = List.of("C", "C#", "Db", "D", "D#", "Eb", "E", "F", "F#", "Gb", "G", "G#", "Ab", "A", "A#", "Bb", "B");
-    static final Map<String, List<String>> KEY_TONICS = Map.of(
-            "MAJOR", List.of("C", "G", "D", "A", "E", "B", "F#", "C#", "F", "Bb", "Eb", "Ab", "Db", "Gb", "Cb"),
-            "MINOR", List.of("A", "E", "B", "F#", "C#", "G#", "D#", "A#", "D", "G", "C", "F", "Bb", "Eb", "Ab"));
+    private static final List<String> MAJOR_TONICS =
+            List.of("C", "G", "D", "A", "E", "B", "F#", "C#", "F", "Bb", "Eb", "Ab", "Db", "Gb", "Cb");
+    private static final List<String> MINOR_TONICS =
+            List.of("A", "E", "B", "F#", "C#", "G#", "D#", "A#", "D", "G", "C", "F", "Bb", "Eb", "Ab");
+    /**
+     * Tonics with a real key signature (at most 7 sharps or flats), per mode, in circle-of-fifths order. A mode of the
+     * major scale shares its signature with the major key it comes from (D Dorian has C major's), so its tonics are
+     * that degree of each major key; harmonic and melodic minor use the natural minor's tonics.
+     */
+    static final Map<String, List<String>> KEY_TONICS = keyTonics();
+
+    private static Map<String, List<String>> keyTonics() {
+        Map<String, List<String>> result = new java.util.LinkedHashMap<>();
+        for (Mode mode : Mode.values()) {
+            List<String> tonics;
+            if (mode == Mode.MAJOR) {
+                tonics = MAJOR_TONICS;
+            } else if (mode.signatureMode() == Mode.MINOR) {
+                tonics = MINOR_TONICS;
+            } else {
+                tonics = MAJOR_TONICS.stream()
+                        .map(t -> Key.of(t, Mode.MAJOR).scale().get(mode.majorScaleDegree() - 1).toString())
+                        .toList();
+            }
+            result.put(mode.name(), tonics);
+        }
+        return java.util.Collections.unmodifiableMap(result);
+    }
     static final String COST_FUNCTION = "cost = Σ|movement| + Σ max(0, |movement| − 5) + 4·crossings + 3·overlaps"
             + " + 2·parallel fifths/octaves + 1·|voice count change|  (hand-tuned heuristic weights)";
 
@@ -155,6 +183,31 @@ public class TheoryService {
         return result;
     }
 
+    public TransposeResponse transpose(TransposeRequest request) {
+        Key key = DomainMapper.toKey(request.key(), "key");
+        List<ProgressionChord> progression = DomainMapper.toProgression(request.chords(), "chords", false);
+        Transposer.Result result = Transposer.transpose(key, progression.stream().map(ProgressionChord::chord).toList(),
+                progression.stream().map(ProgressionChord::voicing).toList(), request.semitones());
+        List<ChordView> chords = new ArrayList<>();
+        for (int i = 0; i < result.chords().size(); i++) {
+            chords.add(DomainMapper.toView(result.chords().get(i), result.voicings().get(i),
+                    request.chords().get(i).durationOrDefault(), request.chords().get(i).pattern()));
+        }
+        return new TransposeResponse(new KeyDto(result.key().tonic().toString(), result.key().mode().name()),
+                result.key().toString(), chords);
+    }
+
+    public KeyDetectionResponse detectKey(KeyDetectionRequest request) {
+        List<ProgressionChord> progression = DomainMapper.toProgression(request.chords(), "chords", false);
+        KeyDetector.Result result = KeyDetector.detect(progression.stream().map(ProgressionChord::chord).toList(),
+                request.chords().stream().map(ChordInput::durationOrDefault).toList());
+        List<KeyCandidateView> candidates = result.candidates().stream()
+                .map(c -> new KeyCandidateView(new KeyDto(c.key().tonic().toString(), c.key().mode().name()), c.key().toString(),
+                        Math.round(c.correlation() * 100) / 100.0)) // same rounding as the explanation
+                .toList();
+        return new KeyDetectionResponse(candidates, result.confidence().name(), result.explanation());
+    }
+
     public AnalysisResponse analyze(ProgressionRequest request) {
         Key key = DomainMapper.toKey(request.key(), "key");
         List<ProgressionChord> progression = DomainMapper.toProgression(request.chords(), "chords", false);
@@ -169,7 +222,8 @@ public class TheoryService {
         Register register = DomainMapper.toRegister(request.register(), "register");
         List<RankedVoicing> ranked = VoiceLeadingOptimizer.rank(from, target, register,
                 request.allowInversions() == null || request.allowInversions(),
-                request.limit() == null ? 8 : request.limit());
+                request.limit() == null ? 8 : request.limit(),
+                Boolean.TRUE.equals(request.fourVoices()));
         List<RankedVoicingView> views = ranked.stream()
                 .map(r -> new RankedVoicingView(r.rank(), DomainMapper.toView(r.chord(), r.voicing(), null),
                         toView(r.result(), fromChord, r.chord()), r.reasons()))
@@ -184,7 +238,8 @@ public class TheoryService {
         Voicing first = keepFirst ? progression.getFirst().voicing() : null;
         OptimizedProgression optimized = ProgressionVoicer.optimize(
                 progression.stream().map(ProgressionChord::chord).toList(), register,
-                request.allowInversions() == null || request.allowInversions(), first);
+                request.allowInversions() == null || request.allowInversions(), first,
+                Boolean.TRUE.equals(request.fourVoices()));
         List<ChordView> chords = new ArrayList<>();
         for (int i = 0; i < optimized.chords().size(); i++) {
             chords.add(DomainMapper.toView(optimized.chords().get(i), optimized.voicings().get(i),

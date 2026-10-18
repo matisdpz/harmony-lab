@@ -69,6 +69,17 @@ export function SettingsDialog({ onClose }: { onClose: () => void }) {
               ))}
             </div>
           </div>
+          <div className="field">
+            <span className="field-label">Clicking a measure</span>
+            <div className="segmented" role="group" aria-label="Clicking a measure">
+              <button type="button" aria-pressed={!settings.auditionOnSelect} onClick={() => settings.update({ auditionOnSelect: false })}>
+                Selects it
+              </button>
+              <button type="button" aria-pressed={settings.auditionOnSelect} onClick={() => settings.update({ auditionOnSelect: true })}>
+                Selects and plays it
+              </button>
+            </div>
+          </div>
           <label className="field">
             <span className="field-label">Volume ({settings.volumeDb} dB)</span>
             <input type="range" min={-30} max={0} step={1} value={settings.volumeDb}

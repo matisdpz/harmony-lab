@@ -26,6 +26,9 @@
 .transport { display: flex; align-items: flex-end; gap: 14px 18px; flex-wrap: wrap; }
 .play { min-width: 112px; height: 36px; font-size: 15px; }
 .tempo { width: 72px; }
+.clickOptions { display: flex; flex-direction: column; gap: 4px; }
+.check { display: inline-flex; align-items: center; gap: 8px; font-size: 14px; }
+.check input { accent-color: var(--blue); width: 15px; height: 15px; }
 .description { font-size: 14px; color: var(--ink-muted); flex: 1; min-width: 200px; align-self: center; }
 
 /* The loop as a line of measures, as in the workspace. */

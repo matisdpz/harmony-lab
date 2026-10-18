@@ -1,9 +1,10 @@
 import { useCallback, useEffect, useMemo, useState, type CSSProperties } from 'react'
+import { useSettings } from '../state/SettingsProvider'
+import { KeyPicker } from '../components/common/KeyPicker'
 import { Keyboard, Play, Square, Trash2 } from 'lucide-react'
-import type { ChordInput, ImprovisationResponse, KeyDto, Mode, PresetView } from '../api/types'
+import type { ChordInput, ImprovisationResponse, KeyDto, PresetView } from '../api/types'
 import { theoryApi } from '../api/theory'
 import { errorMessage, isAbort } from '../api/http'
-import { useCatalog } from '../state/CatalogProvider'
 import { useWorkspace } from '../state/WorkspaceProvider'
 import { useAudio } from '../audio/AudioProvider'
 import { KeyboardPanel, chordHighlights } from '../components/keyboard/KeyboardPanel'
@@ -11,6 +12,7 @@ import type { KeyHighlight } from '../components/keyboard/PianoKeyboard'
 import { ErrorBanner, Spinner } from '../components/common/Status'
 import { validateTempo } from '../components/workspace/WorkspaceHeader'
 import { CustomProgressionForm } from '../components/improvisation/CustomProgressionForm'
+import { SoundPicker } from '../components/audio/SoundPicker'
 import { NoteGuide } from '../components/improvisation/NoteGuide'
 import { loadCustomProgressions, saveCustomProgressions, type CustomProgression } from '../components/improvisation/customProgressions'
 import { useComputerKeyboard } from '../components/improvisation/useComputerKeyboard'
@@ -24,9 +26,9 @@ const OWNER = 'improvisation'
 const ROLE_TO_HIGHLIGHT = { ROOT: 'root', CHORD_TONE: 'tone', SCALE: 'scale', TENSION: 'tension' } as const
 
 export function ImprovisationPage() {
-  const catalog = useCatalog()
   const workspace = useWorkspace()
   const audio = useAudio()
+  const settings = useSettings()
   const [key, setKey] = useState<KeyDto>(workspace.content.key)
   const [presets, setPresets] = useState<PresetView[]>([])
   const [custom, setCustom] = useState<CustomProgression[]>(loadCustomProgressions)
@@ -101,9 +103,9 @@ export function ImprovisationPage() {
       audio.stop()
     } else if (data) {
       void audio.playSequence(data.chords.map((c) => ({ notes: c.chord.voicing, beats: c.chord.durationBeats ?? 4 })), tempo,
-        { loop: true, owner: OWNER })
+        { loop: true, owner: OWNER, countInBeats: settings.countIn ? 4 : 0, metronome: settings.metronome })
     }
-  }, [playing, audio, data, tempo])
+  }, [playing, audio, data, tempo, settings.countIn, settings.metronome])
 
   useEffect(() => {
     const onKey = (event: KeyboardEvent) => {
@@ -128,12 +130,6 @@ export function ImprovisationPage() {
     return map
   }, [currentChord])
 
-  const setMode = (mode: Mode) => {
-    const tonics = catalog.keyTonics[mode]
-    setKey({ mode, tonic: tonics.includes(key.tonic) ? key.tonic : tonics[0] })
-    setSource((s) => (s?.kind === 'preset' ? null : s)) // presets depend on the mode
-  }
-
   const updateCustom = (list: CustomProgression[]) => {
     setCustom(list)
     saveCustomProgressions(list)
@@ -154,19 +150,10 @@ export function ImprovisationPage() {
       <div className={own.layout}>
         <aside className={own.sidebar} aria-label="Progressions">
           <div className={styles.controlsRow}>
-            <label className="field">
-              <span className="field-label">Key</span>
-              <select className="select" aria-label="Key tonic" value={key.tonic} onChange={(e) => setKey({ ...key, tonic: e.target.value })}>
-                {catalog.keyTonics[key.mode].map((t) => <option key={t} value={t}>{formatMusic(t)}</option>)}
-              </select>
-            </label>
-            <div className="field">
-              <span className="field-label">Scale</span>
-              <div className="segmented" role="group" aria-label="Scale">
-                <button type="button" aria-pressed={key.mode === 'MAJOR'} onClick={() => setMode('MAJOR')}>Major</button>
-                <button type="button" aria-pressed={key.mode === 'MINOR'} onClick={() => setMode('MINOR')}>Minor</button>
-              </div>
-            </div>
+            <KeyPicker value={key} onChange={(k, modeChanged) => {
+              setKey(k)
+              if (modeChanged) setSource((s) => (s?.kind === 'preset' ? null : s)) // presets depend on the mode
+            }} />
           </div>
 
           <h2 className="panel-title">Preset progressions</h2>
@@ -227,6 +214,17 @@ export function ImprovisationPage() {
                        if (validateTempo(e.target.value) === null) audio.setTempo(Number(e.target.value))
                      }} />
             </label>
+            <SoundPicker id="improvisation-sound" />
+            <div className={own.clickOptions}>
+              <label className={own.check}>
+                <input type="checkbox" checked={settings.countIn} onChange={(e) => settings.update({ countIn: e.target.checked })} />
+                Count-in (one bar)
+              </label>
+              <label className={own.check}>
+                <input type="checkbox" checked={settings.metronome} onChange={(e) => settings.update({ metronome: e.target.checked })} />
+                Metronome
+              </label>
+            </div>
             <p className={own.description}>{request?.description ? formatMusicProse(request.description) : null}</p>
             {loading && <Spinner label="Preparing" />}
           </div>
@@ -253,8 +251,17 @@ export function ImprovisationPage() {
               </ol>
 
               <div className={own.now} aria-live="polite">
-                <strong className={own.nowChord}>{formatMusic(currentChord.chord.symbol)}</strong>
-                {nextChord && <span className={own.next}>then <strong>{formatMusic(nextChord.chord.symbol)}</strong></span>}
+                {playing && audio.countIn !== null ? (
+                  <>
+                    <strong className={own.nowChord}>{audio.countIn}</strong>
+                    <span className={own.next}>then <strong>{formatMusic(data.chords[0].chord.symbol)}</strong></span>
+                  </>
+                ) : (
+                  <>
+                    <strong className={own.nowChord}>{formatMusic(currentChord.chord.symbol)}</strong>
+                    {nextChord && <span className={own.next}>then <strong>{formatMusic(nextChord.chord.symbol)}</strong></span>}
+                  </>
+                )}
                 <span className={own.keysHint}>
                   <Keyboard size={13} aria-hidden /> Play along with A W S E D F T G Y H U J K (from {formatMusic(midiName(base))}), Z / X change octave, Space plays or stops.
                 </span>

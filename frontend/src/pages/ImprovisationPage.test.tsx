@@ -49,7 +49,7 @@ describe('Improvisation page', () => {
     await renderPage()
     await userEvent.click(screen.getByRole('button', { name: /Play loop/ }))
     expect(getAudioEngine().playSequence).toHaveBeenCalledWith(
-      [{ notes: [57, 60, 64], beats: 4 }, { notes: [57, 60, 65], beats: 4 }], 90, expect.any(Object), true)
+      [{ notes: [57, 60, 64], beats: 4 }, { notes: [57, 60, 65], beats: 4 }], 90, expect.any(Object), expect.objectContaining({ loop: true }))
     await userEvent.keyboard('a')
     expect(getAudioEngine().playNote).toHaveBeenCalledWith(60)
     await userEvent.keyboard('x')

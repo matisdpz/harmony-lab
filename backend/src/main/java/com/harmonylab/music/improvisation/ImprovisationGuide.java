@@ -72,7 +72,7 @@ public final class ImprovisationGuide {
         }
 
         NoteName tonic = key.tonic();
-        if (key.mode() == Mode.MAJOR) {
+        if (!key.mode().hasMinorThird()) {
             addTension(key, notes, tonic.transpose(Interval.MINOR_THIRD), "Blue note (b3 of " + key + "): slide it up to the major third");
         }
         addTension(key, notes, tonic.transpose(Interval.DIMINISHED_FIFTH), "Blue note (b5 of " + key + "): use as a passing note");
@@ -97,7 +97,7 @@ public final class ImprovisationGuide {
     }
 
     private static boolean isDominant(Key key, Chord chord) {
-        if (chord.quality() == ChordQuality.DOMINANT7) {
+        if (chord.quality().isDominantType()) {
             return true;
         }
         return chord.quality() == ChordQuality.MAJOR

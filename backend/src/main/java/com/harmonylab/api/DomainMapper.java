@@ -148,6 +148,10 @@ public final class DomainMapper {
     }
 
     public static ChordView toView(Chord chord, Voicing voicing, Integer durationBeats) {
+        return toView(chord, voicing, durationBeats, null);
+    }
+
+    public static ChordView toView(Chord chord, Voicing voicing, Integer durationBeats, String pattern) {
         List<NoteName> tones = chord.tones();
         List<IntervalView> intervals = new ArrayList<>();
         for (int i = 0; i < tones.size(); i++) {
@@ -167,7 +171,8 @@ public final class DomainMapper {
                 intervals,
                 voicing == null ? null : voicing.notes(),
                 voicing == null ? null : voicing.spelledNotes(chord),
-                durationBeats);
+                durationBeats,
+                pattern);
     }
 
     public static ChordView toView(ProgressionChord chord) {

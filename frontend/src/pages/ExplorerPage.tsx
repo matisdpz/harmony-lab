@@ -1,6 +1,9 @@
 import { useEffect, useMemo, useState } from 'react'
+import { KeyPicker } from '../components/common/KeyPicker'
+import { QualityOptions } from '../components/common/QualityOptions'
+import { useMidi } from '../state/MidiProvider'
 import { Plus, Play, ScanSearch, X } from 'lucide-react'
-import type { ChordDetails, IdentifyResponse, KeyDto, KeyView, Mode } from '../api/types'
+import type { ChordDetails, IdentifyResponse, KeyDto, KeyView } from '../api/types'
 import { theoryApi } from '../api/theory'
 import { errorMessage, isAbort } from '../api/http'
 import { useCatalog } from '../state/CatalogProvider'
@@ -14,7 +17,7 @@ import { ErrorBanner, Spinner } from '../components/common/Status'
 import { formatMusic, formatMusicProse, midiName } from '../model/notes'
 import styles from './Pages.module.css'
 
-const INVERSION_NAMES = ['Root position', 'First inversion', 'Second inversion', 'Third inversion']
+const INVERSION_NAMES = ['Root position', 'First inversion', 'Second inversion', 'Third inversion', 'Fourth inversion', 'Fifth inversion']
 
 export function ExplorerPage() {
   const catalog = useCatalog()
@@ -30,6 +33,13 @@ export function ExplorerPage() {
   const [error, setError] = useState<string | null>(null)
   const [identifyMode, setIdentifyMode] = useState(false)
   const [picked, setPicked] = useState<number[]>([])
+  const midi = useMidi()
+  // In identification mode, a chord played on a MIDI keyboard becomes the selection.
+  const heldKey = midi.heldNotes.join(',')
+  useEffect(() => {
+    if (identifyMode && midi.heldNotes.length > 0) setPicked(midi.heldNotes.slice(0, 8))
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [heldKey, identifyMode])
   const [identified, setIdentified] = useState<IdentifyResponse | null>(null)
 
   const size = catalog.qualities.find((q) => q.id === quality)?.size ?? 3
@@ -73,11 +83,6 @@ export function ExplorerPage() {
     }
   }
 
-  const setMode = (mode: Mode) => {
-    const tonics = catalog.keyTonics[mode]
-    setKey({ mode, tonic: tonics.includes(key.tonic) ? key.tonic : tonics[0] })
-  }
-
   return (
     <div className={styles.page}>
       <header className={styles.pageHeader}>
@@ -97,22 +102,10 @@ export function ExplorerPage() {
         <label className="field">
           <span className="field-label">Quality</span>
           <select className="select" aria-label="Quality" value={quality} onChange={(e) => setQuality(e.target.value)}>
-            {catalog.qualities.map((q) => <option key={q.id} value={q.id}>{q.name}{q.suffix ? ` (${q.suffix})` : ''}</option>)}
+            <QualityOptions qualities={catalog.qualities} />
           </select>
         </label>
-        <label className="field">
-          <span className="field-label">Key context</span>
-          <select className="select" value={key.tonic} onChange={(e) => setKey({ ...key, tonic: e.target.value })} aria-label="Key tonic">
-            {catalog.keyTonics[key.mode].map((t) => <option key={t} value={t}>{formatMusic(t)}</option>)}
-          </select>
-        </label>
-        <div className="field">
-          <span className="field-label">Scale</span>
-          <div className="segmented" role="group" aria-label="Scale">
-            <button type="button" aria-pressed={key.mode === 'MAJOR'} onClick={() => setMode('MAJOR')}>Major</button>
-            <button type="button" aria-pressed={key.mode === 'MINOR'} onClick={() => setMode('MINOR')}>Minor</button>
-          </div>
-        </div>
+        <KeyPicker value={key} onChange={(k) => setKey(k)} tonicLabel="Key context" />
       </div>
 
       {error && <ErrorBanner message={error} />}
@@ -139,7 +132,7 @@ export function ExplorerPage() {
 
               <h3 className="panel-title">Interval structure</h3>
               <div className={styles.ladder} aria-hidden>
-                {Array.from({ length: 15 }, (_, s) => {
+                {Array.from({ length: Math.max(15, ...chord.intervals.map((i) => i.semitones + 1)) }, (_, s) => {
                   const tone = chord.intervals.find((i) => i.semitones === s)
                   return <span key={s} className={tone ? (s === 0 ? styles.ladderRoot : styles.ladderTone) : ''}>{tone ? formatMusic(tone.name) : ''}</span>
                 })}
@@ -212,7 +205,7 @@ export function ExplorerPage() {
       <KeyboardPanel
         highlights={highlights}
         follow={identifyMode ? undefined : chord?.voicing}
-        title={identifyMode ? 'Click keys to choose notes' : chord ? <span className="score">{formatMusic(chord.symbol)}</span> : undefined}
+        title={identifyMode ? (midi.status === 'on' ? 'Click keys or play them on your MIDI keyboard' : 'Click keys to choose notes') : chord ? <span className="score">{formatMusic(chord.symbol)}</span> : undefined}
         onKeyPress={identifyMode ? (midi) => {
           setIdentified(null)
           setPicked((p) => (p.includes(midi) ? p.filter((m) => m !== midi) : [...p, midi].slice(-8)))

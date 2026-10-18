@@ -53,6 +53,18 @@ public class TheoryController {
         return service.key(tonic, mode);
     }
 
+    @PostMapping("/transpose")
+    @Operation(summary = "Transpose a key and its chords by semitones, keeping correct spelling")
+    public TransposeResponse transpose(@Valid @RequestBody TransposeRequest request) {
+        return service.transpose(request);
+    }
+
+    @PostMapping("/keys/detect")
+    @Operation(summary = "Estimate the key of a progression (Krumhansl–Schmuckler; major and natural minor only)")
+    public KeyDetectionResponse detectKey(@Valid @RequestBody KeyDetectionRequest request) {
+        return service.detectKey(request);
+    }
+
     @PostMapping("/analyze")
     @Operation(summary = "Roman numeral, diatonic and voice-leading analysis of a progression")
     public AnalysisResponse analyze(@Valid @RequestBody ProgressionRequest request) {

@@ -1,7 +1,7 @@
 import { request } from './http'
 import type {
   AlternativesResponse, AnalysisResponse, Catalog, ChordDetails, ChordInput, IdentifyResponse, ImprovisationResponse, KeyDto, KeyView,
-  Objective, PresetView, OptimizeResponse, RegisterDto, SuggestionResponse, VoiceLeadingResponse, VoicingStyle,
+  Objective, PresetView, OptimizeResponse, RegisterDto, SuggestionResponse, VoiceLeadingResponse, VoicingStyle, KeyDetectionResponse, TransposeResponse,
 } from './types'
 
 export const theoryApi = {
@@ -26,13 +26,19 @@ export const theoryApi = {
   key: (key: KeyDto, signal?: AbortSignal) =>
     request<KeyView>('GET', `/api/theory/keys?tonic=${encodeURIComponent(key.tonic)}&mode=${key.mode}`, undefined, signal),
 
+  transpose: (key: KeyDto, chords: ChordInput[], semitones: number) =>
+    request<TransposeResponse>('POST', '/api/theory/transpose', { key, chords, semitones }),
+
+  detectKey: (chords: ChordInput[], signal?: AbortSignal) =>
+    request<KeyDetectionResponse>('POST', '/api/theory/keys/detect', { chords }, signal),
+
   analyze: (key: KeyDto, chords: ChordInput[], signal?: AbortSignal) =>
     request<AnalysisResponse>('POST', '/api/theory/analyze', { key, chords }, signal),
 
-  voiceLeading: (body: { fromVoicing: number[]; fromChord?: ChordInput; target: ChordInput; register?: RegisterDto; allowInversions?: boolean; limit?: number }, signal?: AbortSignal) =>
+  voiceLeading: (body: { fromVoicing: number[]; fromChord?: ChordInput; target: ChordInput; register?: RegisterDto; allowInversions?: boolean; limit?: number; fourVoices?: boolean }, signal?: AbortSignal) =>
     request<VoiceLeadingResponse>('POST', '/api/theory/voice-leading', body, signal),
 
-  optimize: (body: { chords: ChordInput[]; register?: RegisterDto; allowInversions?: boolean; keepFirstVoicing?: boolean }) =>
+  optimize: (body: { chords: ChordInput[]; register?: RegisterDto; allowInversions?: boolean; keepFirstVoicing?: boolean; fourVoices?: boolean }) =>
     request<OptimizeResponse>('POST', '/api/theory/voice-leading/optimize', body),
 
   suggestions: (body: { key: KeyDto; chords: ChordInput[]; selectedIndex: number; objective: Objective; register?: RegisterDto; limit?: number }, signal?: AbortSignal) =>

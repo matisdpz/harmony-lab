@@ -1,7 +1,9 @@
 import { useEffect, useState } from 'react'
+import { ShortcutsDialog } from './ShortcutsDialog'
+import { useMidi } from '../../state/MidiProvider'
 import { NavLink, Outlet } from 'react-router'
 import {
-  AudioWaveform, BookOpenText, FolderOpen, KeyboardMusic, LayoutPanelTop, Menu, Plus, Settings, Spline, X,
+  AudioWaveform, BookOpenText, Cable, Keyboard, FolderOpen, KeyboardMusic, LayoutPanelTop, Menu, Plus, Settings, Spline, X,
 } from 'lucide-react'
 import { formatMusic } from '../../model/notes'
 import { useWorkspace } from '../../state/WorkspaceProvider'
@@ -24,7 +26,22 @@ export function AppShell() {
   const { projects, loading } = useProjects()
   const { open, createNew } = useProjectSwitching()
   const [settingsOpen, setSettingsOpen] = useState(false)
+  const [shortcutsOpen, setShortcutsOpen] = useState(false)
   const [drawerOpen, setDrawerOpen] = useState(false)
+
+  // "?" opens the shortcut list from anywhere, except while typing.
+  useEffect(() => {
+    const onKey = (event: KeyboardEvent) => {
+      const el = event.target as HTMLElement | null
+      const typing = el && (['INPUT', 'TEXTAREA', 'SELECT'].includes(el.tagName) || el.isContentEditable)
+      if (event.key === '?' && !typing) {
+        event.preventDefault()
+        setShortcutsOpen(true)
+      }
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [])
 
   // Warn before closing the tab with unsaved changes.
   useEffect(() => {
@@ -93,9 +110,16 @@ export function AppShell() {
           </ul>
         </div>
 
-        <button type="button" className={`btn btn-ghost ${styles.settingsButton}`} onClick={() => setSettingsOpen(true)}>
-          <Settings size={15} aria-hidden /> Settings
-        </button>
+        <div className={styles.footer}>
+          <MidiStatusControl />
+
+          <button type="button" className={`btn btn-ghost ${styles.settingsButton}`} onClick={() => setShortcutsOpen(true)}>
+            <Keyboard size={15} aria-hidden /> Keyboard shortcuts <kbd className="kbd">?</kbd>
+          </button>
+          <button type="button" className={`btn btn-ghost ${styles.settingsButton}`} onClick={() => setSettingsOpen(true)}>
+            <Settings size={15} aria-hidden /> Settings
+          </button>
+        </div>
       </aside>
 
       {drawerOpen && <div className={styles.scrim} onClick={() => setDrawerOpen(false)} aria-hidden />}
@@ -105,6 +129,37 @@ export function AppShell() {
       </main>
 
       {settingsOpen && <SettingsDialog onClose={() => setSettingsOpen(false)} />}
+      {shortcutsOpen && <ShortcutsDialog onClose={() => setShortcutsOpen(false)} />}
+    </div>
+  )
+}
+
+/** Connects a MIDI keyboard. Global, because the keyboard works on every page. */
+function MidiStatusControl() {
+  const midi = useMidi()
+  if (midi.status === 'unsupported') {
+    return <p className={styles.midiNote}>MIDI keyboards need Chrome, Edge or Firefox.</p>
+  }
+  if (midi.status === 'on') {
+    return (
+      <div className={styles.midi}>
+        <span className={styles.midiDevice}>
+          <span className={midi.devices.length ? styles.midiOn : styles.midiWaiting} aria-hidden />
+          {midi.devices.length ? midi.devices.join(', ') : 'Waiting for a MIDI keyboard…'}
+        </span>
+        <button type="button" className="btn btn-ghost btn-sm" onClick={midi.disconnect}>Disconnect</button>
+      </div>
+    )
+  }
+  return (
+    <div className={styles.midi}>
+      {midi.status === 'denied' && (
+        <p className={styles.midiNote}>The browser refused MIDI access. Allow it for this site, then try again.</p>
+      )}
+      <button type="button" className={`btn btn-ghost ${styles.settingsButton}`} onClick={() => void midi.connect()}
+              disabled={midi.status === 'connecting'}>
+        <Cable size={15} aria-hidden /> {midi.status === 'connecting' ? 'Connecting…' : 'Connect MIDI keyboard'}
+      </button>
     </div>
   )
 }

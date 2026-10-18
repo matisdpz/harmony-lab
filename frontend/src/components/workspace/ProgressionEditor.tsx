@@ -1,5 +1,7 @@
 import { useState, type CSSProperties, type DragEvent } from 'react'
-import { ChevronLeft, ChevronRight, Copy, Music, Play, Trash2 } from 'lucide-react'
+import { useProgressionPlayback } from '../../pages/usePlayback'
+import type { PlaybackPattern } from '../../model/rhythm'
+import { ChevronLeft, ChevronRight, Copy, Music, Play, Square, StepForward, Trash2 } from 'lucide-react'
 import type { ChordAnalysisView } from '../../api/types'
 import type { ChordSlot } from '../../model/workspace'
 import { formatMusic } from '../../model/notes'
@@ -9,6 +11,7 @@ import { useAudio } from '../../audio/AudioProvider'
 import { useConfirm } from '../../state/ConfirmProvider'
 import { EmptyState, Spinner } from '../common/Status'
 import { AddChordForm } from './AddChordForm'
+import { MidiChordHint } from './MidiChordHint'
 import styles from './ProgressionEditor.module.css'
 
 /**
@@ -53,11 +56,7 @@ export function ProgressionEditor() {
       <div className={styles.toolbar}>
         <h2 className="panel-title">Progression</h2>
         <SelectionActions />
-        <div className={styles.hint}>
-          <span className="kbd">←</span><span className="kbd">→</span> select, <span className="kbd">Alt</span> + arrows move,
-          <span className="kbd">Space</span> play
-        </div>
-        <button type="button" className="btn btn-ghost btn-sm" onClick={() => void clear()} disabled={chords.length === 0}>
+        <button type="button" className={`btn btn-ghost btn-sm ${styles.clear}`} onClick={() => void clear()} disabled={chords.length === 0}>
           <Trash2 size={14} aria-hidden /> Clear
         </button>
       </div>
@@ -105,6 +104,7 @@ export function ProgressionEditor() {
         </div>
       )}
 
+      <MidiChordHint />
       <AddChordForm />
     </section>
   )
@@ -114,6 +114,7 @@ export function ProgressionEditor() {
 function SelectionActions() {
   const workspace = useWorkspace()
   const audio = useAudio()
+  const playback = useProgressionPlayback()
   const chord = workspace.selected
   const index = workspace.selectedIndex
   const count = workspace.content.chords.length
@@ -123,6 +124,10 @@ function SelectionActions() {
       <span className={styles.selectionName}>{formatMusic(chord.symbol)}</span>
       <button type="button" className="btn btn-ghost btn-icon btn-sm" onClick={() => void audio.playChord(chord.voicing)} aria-label={`Play ${chord.symbol}`} title="Play chord">
         <Play size={14} />
+      </button>
+      <button type="button" className="btn btn-ghost btn-icon btn-sm" onClick={() => playback.toggle(index)}
+              aria-label={playback.playing ? 'Stop playback' : 'Play from this chord'} title={playback.playing ? 'Stop' : 'Play from this chord (Shift+Space)'}>
+        {playback.playing ? <Square size={13} /> : <StepForward size={15} />}
       </button>
       <button type="button" className="btn btn-ghost btn-icon btn-sm" onClick={() => workspace.moveChord(chord.id, index - 1)}
               disabled={index === 0} aria-label="Move left" title="Move left (Alt+←)">
@@ -142,6 +147,17 @@ function SelectionActions() {
   )
 }
 
+/** Short performance directions, written above the staff as in a score. */
+const PATTERN_MARKS: Record<PlaybackPattern, string> = {
+  BLOCK: '',
+  ARPEGGIO_UP: 'arp. ↑',
+  ARPEGGIO_DOWN: 'arp. ↓',
+  ARPEGGIO_UP_DOWN: 'arp. ↕',
+  ALBERTI: 'Alberti',
+  REPEATED: 'rep.',
+  BASS_CHORD: 'bass–chord',
+}
+
 function Measure({ chord, index, tempo, analysis, selected, playing, pending, onDragStart }: {
   chord: ChordSlot
   index: number
@@ -153,6 +169,8 @@ function Measure({ chord, index, tempo, analysis, selected, playing, pending, on
   onDragStart: (e: DragEvent) => void
 }) {
   const workspace = useWorkspace()
+  const audio = useAudio()
+  const { auditionOnSelect } = useSettings()
   const category = analysis?.category
   const beats = chord.durationBeats
   // --beats sets the measure width; --duration lets the playhead cross the measure in real time.
@@ -160,9 +178,13 @@ function Measure({ chord, index, tempo, analysis, selected, playing, pending, on
   return (
     <div className={`${styles.measure} ${selected ? styles.selected : ''} ${playing ? styles.playing : ''}`}
          style={style} draggable onDragStart={onDragStart} data-testid="chord-card">
-      <button type="button" className={styles.select} onClick={() => workspace.select(chord.id)}
-              aria-pressed={selected} aria-label={`Chord ${index + 1}: ${chord.symbol}`}>
+      <button type="button" className={styles.select} onClick={() => {
+        workspace.select(chord.id)
+        if (auditionOnSelect) void audio.playChord(chord.voicing)
+      }}
+              aria-pressed={selected} aria-label={`Chord ${index + 1}: ${chord.symbol}`} data-space-plays>
         <span className={styles.number}>{index + 1}</span>
+        {chord.pattern !== 'BLOCK' && <span className={styles.direction}>{PATTERN_MARKS[chord.pattern]}</span>}
         <span className={styles.symbol}>{formatMusic(chord.symbol)}</span>
         <span className={styles.staff} aria-hidden>
           {Array.from({ length: beats }, (_, i) => <span key={i} className={styles.slash} />)}

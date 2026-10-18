@@ -42,7 +42,7 @@ export const CATALOG: Catalog = {
     { id: 'DOMINANT7', name: 'Dominant seventh', suffix: '7', family: 'SEVENTH', intervals: ['P1', 'M3', 'P5', 'm7'], size: 4 },
   ],
   roots: ['C', 'C#', 'Db', 'D', 'Eb', 'E', 'F', 'F#', 'G', 'Ab', 'A', 'Bb', 'B'],
-  keyTonics: { MAJOR: ['C', 'G', 'D', 'F'], MINOR: ['A', 'E', 'D'] },
+  keyTonics: { MAJOR: ['C', 'G', 'D', 'F'], MINOR: ['A', 'E', 'D'], DORIAN: ['D', 'A', 'E'] },
   objectives: [
     { id: 'SMOOTH_VOICE_LEADING', label: 'Smooth voice leading', description: 'smooth' },
     { id: 'STRONGER_RESOLUTION', label: 'Stronger tonal resolution', description: 'resolve' },

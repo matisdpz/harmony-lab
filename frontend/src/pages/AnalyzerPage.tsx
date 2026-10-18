@@ -1,4 +1,6 @@
 import { Link } from 'react-router'
+import { KeyEstimate } from '../components/analysis/KeyEstimate'
+import { modePhrase } from '../model/modes'
 import { formatMusic, formatMusicProse } from '../model/notes'
 import { AudioWaveform } from 'lucide-react'
 import { useWorkspace } from '../state/WorkspaceProvider'
@@ -16,7 +18,7 @@ export function AnalyzerPage() {
         <div>
           <h1>Progression Analyzer</h1>
           <p className={styles.lead}>
-            "{content.name}" in {formatMusic(content.key.tonic)} {content.key.mode === 'MAJOR' ? 'major' : 'natural minor'}. Facts are computed from the notes;
+            "{content.name}" in {formatMusic(content.key.tonic)} {modePhrase(content.key.mode)}. Facts are computed from the notes;
             heuristics apply stylistic conventions and are labelled as such.
           </p>
         </div>
@@ -44,6 +46,8 @@ export function AnalyzerPage() {
               <Metric value={data.metrics.cadence ?? 'None'} label="cadence at the end" />
             </div>
           </section>
+
+          <KeyEstimate />
 
           <section className={styles.section} aria-label="Chord-by-chord analysis">
             <h2 className={styles.sectionTitle}>Chords</h2>

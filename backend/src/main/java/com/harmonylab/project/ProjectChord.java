@@ -26,15 +26,19 @@ public class ProjectChord {
     @Column(name = "duration_beats", nullable = false)
     private int durationBeats;
 
+    @Column(name = "pattern", nullable = false, length = 20)
+    private String pattern;
+
     protected ProjectChord() {
     }
 
-    public ProjectChord(String root, String quality, int inversion, List<Integer> voicing, int durationBeats) {
+    public ProjectChord(String root, String quality, int inversion, List<Integer> voicing, int durationBeats, String pattern) {
         this.root = root;
         this.quality = quality;
         this.inversion = inversion;
         this.voicing = List.copyOf(voicing);
         this.durationBeats = durationBeats;
+        this.pattern = pattern;
     }
 
     public String getRoot() {
@@ -55,5 +59,9 @@ public class ProjectChord {
 
     public int getDurationBeats() {
         return durationBeats;
+    }
+
+    public String getPattern() {
+        return pattern;
     }
 }

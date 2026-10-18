@@ -82,6 +82,14 @@
 .dim { color: var(--ink-faint); font-size: 13px; padding: 2px 8px; }
 
 .settingsButton { justify-content: flex-start; }
+.footer { display: flex; flex-direction: column; gap: 2px; padding-top: 10px; border-top: 1px solid var(--rule); }
+
+.midi { display: flex; flex-direction: column; gap: 4px; }
+.midiDevice { display: flex; align-items: center; gap: 8px; padding: 0 8px; font-size: 13px; color: var(--ink); overflow-wrap: anywhere; }
+.midiOn, .midiWaiting { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; background: var(--green); }
+.midiWaiting { background: transparent; box-shadow: inset 0 0 0 1.5px var(--ink-faint); }
+.midi :global(.btn-sm) { align-self: flex-start; margin-left: 2px; }
+.midiNote { font-size: 12px; color: var(--ink-muted); padding: 0 8px; line-height: 1.4; }
 
 .main { min-width: 0; }
 

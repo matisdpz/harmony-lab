@@ -23,6 +23,7 @@ export function VoiceLeadingPage() {
   const [pairState, setPair] = useState(Math.max(0, workspace.selectedIndex - 1))
   const pair = Math.max(0, Math.min(pairState, chords.length - 2))
   const [allowInversions, setAllowInversions] = useState(true)
+  const [fourVoices, setFourVoices] = useState(false)
   const [ranking, setRanking] = useState<VoiceLeadingResponse | null>(null)
   const [chosen, setChosen] = useState(0)
   const [error, setError] = useState<string | null>(null)
@@ -32,7 +33,7 @@ export function VoiceLeadingPage() {
 
   const from = chords[pair]
   const to = chords[pair + 1]
-  const requestKey = from && to ? JSON.stringify([from.voicing, toChordInput(to), allowInversions, content.register]) : null
+  const requestKey = from && to ? JSON.stringify([from.voicing, toChordInput(to), allowInversions, fourVoices, content.register]) : null
 
   useEffect(() => {
     if (!requestKey || !from || !to) {
@@ -41,7 +42,7 @@ export function VoiceLeadingPage() {
     }
     const controller = new AbortController()
     setLoading(true)
-    theoryApi.voiceLeading({ fromVoicing: from.voicing, fromChord: { ...toChordInput(from), voicing: undefined }, target: { ...toChordInput(to), voicing: undefined }, register: content.register, allowInversions, limit: 8 }, controller.signal)
+    theoryApi.voiceLeading({ fromVoicing: from.voicing, fromChord: { ...toChordInput(from), voicing: undefined }, target: { ...toChordInput(to), voicing: undefined }, register: content.register, allowInversions, limit: 8, fourVoices }, controller.signal)
       .then((r) => {
         setRanking(r)
         setChosen(0)
@@ -59,7 +60,7 @@ export function VoiceLeadingPage() {
   const optimizeAll = async () => {
     setOptimizing(true)
     try {
-      setOptimized(await theoryApi.optimize({ chords: chords.map(toChordInput), register: content.register, allowInversions, keepFirstVoicing: true }))
+      setOptimized(await theoryApi.optimize({ chords: chords.map(toChordInput), register: content.register, allowInversions, keepFirstVoicing: true, fourVoices }))
     } catch (e) {
       notify('error', errorMessage(e))
     } finally {
@@ -99,6 +100,10 @@ export function VoiceLeadingPage() {
         <label className={vl.toggle}>
           <input type="checkbox" checked={allowInversions} onChange={(e) => setAllowInversions(e.target.checked)} />
           Allow other inversions of {formatMusic(to?.symbol.split('/')[0] ?? '')}
+        </label>
+        <label className={vl.toggle} title="Triads get a fourth voice that doubles the root, as in chorale writing">
+          <input type="checkbox" checked={fourVoices} onChange={(e) => setFourVoices(e.target.checked)} />
+          Four voices (double the root of triads)
         </label>
         {loading && <Spinner label="Ranking voicings" />}
       </div>

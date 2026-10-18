@@ -149,7 +149,8 @@ public class ProjectService {
                 continue;
             }
             chords.add(new ProjectChord(pc.chord().root().toString(), pc.chord().quality().name(),
-                    pc.chord().inversion(), pc.voicing().notes(), request.chords().get(i).durationOrDefault()));
+                    pc.chord().inversion(), pc.voicing().notes(), request.chords().get(i).durationOrDefault(),
+                    request.chords().get(i).patternOrDefault()));
         }
         if (!errors.isEmpty()) {
             throw new FieldValidationException(errors);
@@ -168,7 +169,7 @@ public class ProjectService {
 
     private ProjectResponse toResponse(ProjectEntity entity) {
         List<ChordView> chords = entity.getChords().stream()
-                .map(c -> DomainMapper.toView(toChord(c), new Voicing(c.getVoicing()), c.getDurationBeats()))
+                .map(c -> DomainMapper.toView(toChord(c), new Voicing(c.getVoicing()), c.getDurationBeats(), c.getPattern()))
                 .toList();
         return new ProjectResponse(entity.getId(), entity.getName(), new KeyDto(entity.getKeyTonic(), entity.getKeyMode()),
                 entity.getTempoBpm(), new RegisterDto(entity.getRegisterLow(), entity.getRegisterHigh()), chords,

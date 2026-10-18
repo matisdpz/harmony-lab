@@ -19,8 +19,12 @@ accidental, the simplest enharmonic name is used instead.
 
 ## Chords
 
-`ChordQuality` defines each quality by its intervals above the root (15 qualities: triads, sus2/sus4,
-sevenths, sixths, add9 and minor add9). A `Chord` is `(root, quality, inversion)`. The bass is the
+`ChordQuality` defines each quality by its intervals above the root (28 qualities: triads, sus2/sus4,
+sevenths including minor-major and augmented-major sevenths, sixths, add9, the extended 9/11/13 chords and
+the altered dominants 7♭9, 7♯9, 7♯11, 7♭13 and 7alt). Compound intervals (♭9 = 13 semitones, ♯11 = 18, 13 = 21)
+are spelled like any other, so C7♯9 contains D♯ and C7♭13 contains A♭. Two qualities follow jazz practice:
+the dominant eleventh leaves out the third, and 7alt is 1-3-♭7 with ♭9, ♯9 and ♭13. `isDominantType()` groups
+the dominant seventh with its extensions and alterations for every rule about dominants. A `Chord` is `(root, quality, inversion)`. The bass is the
 `inversion`-th chord tone. `ChordSymbol` is the only place where text is parsed or produced:
 `[A-G][#|b|##|bb]` + suffix + optional `/bass`, and the bass must be a chord tone.
 
@@ -35,8 +39,29 @@ interpretation is returned, because note sets are ambiguous.
 
 ## Keys and Roman numerals
 
-`Key(tonic, Mode)` supports major and natural minor. Theoretical keys (more than 7 sharps or flats) are
-rejected with a hint to use the enharmonic key. Diatonic chords are built by stacking scale thirds.
+`Key(tonic, Mode)` supports nine modes: major, natural, harmonic and melodic minor, and the Dorian, Phrygian,
+Lydian, Mixolydian and Locrian modes. Theoretical keys (more than 7 sharps or flats in the key signature) are
+rejected with a hint to use the enharmonic key; harmonic and melodic minor use the natural minor's signature,
+so D♯ harmonic minor is accepted although its scale contains C𝄪. Diatonic chords are built by stacking scale
+thirds (harmonic minor gives i(maj7), III+maj7 and vii°7).
+
+In major and the three minors, chords get tonic / predominant / dominant labels. In the church modes only the
+tonic chord does; the others are described by their colour, and borrowed chords come from the closest
+major or natural minor (Dorian borrows from minor, Mixolydian from major).
+
+## Key detection (`KeyDetector`)
+
+Krumhansl–Schmuckler: each chord tone adds the chord's length in beats to its pitch class, and the
+12-value profile is correlated (Pearson) with the Krumhansl–Kessler major and minor probe-tone profiles
+rotated to every tonic. The three best keys are returned. Confidence is strong when the best correlation is
+at least 0.75 and leads by 0.08, moderate from 0.6 with a 0.03 lead, weak otherwise, and always weak when the
+two best keys are relatives within 0.15 (they share every note, so the first and last chords decide).
+
+## Transposition (`Transposer`)
+
+The new tonic takes the spelling with the fewest accidentals. Every root moves by the same spelled interval
+as the tonic, so chords keep their degree (F in A minor becomes G♭ in B♭ minor), and each voicing moves by the
+smaller of the two directions (up 7 = down 5) so repeated transposition stays in the register.
 
 A Roman numeral's **degree** comes from the root's *letter* relative to the tonic letter. Its
 **alteration** is the root's difference from that scale degree (so Ab in C major is `bVI`, G# in A minor
@@ -172,5 +197,13 @@ For a chord in a key, every pitch class gets one role:
 Tension names use the key's spelling when the note belongs to the key (G rather than F## for the #9 of E7
 in A minor). Every note carries a short reason, presented as a stylistic convention.
 
-`ProgressionPresets` defines common progressions by scale degree and quality. It realises them in any key
-of the matching mode, and the voicings come from `ProgressionVoicer`.
+`ProgressionPresets` defines common progressions by scale degree and quality, including one vamp per church
+mode. It realises them in any key of the matching mode (harmonic and melodic minor keys use the minor
+presets), and the voicings come from `ProgressionVoicer`.
+
+## Voicings with doubled tones
+
+`VoicingStyle.FOUR_PART` writes keyboard-style four-part harmony: the bass alone and the other voices in close
+position at least a sixth above it; a triad doubles the bass's pitch class. For voice leading,
+`VoicingGenerator.candidates(..., fourVoices = true)` adds a second root to triads (in another octave), and the
+optimiser and ranking accept the same flag.

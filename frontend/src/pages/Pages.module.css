@@ -31,7 +31,7 @@
 .actions { display: flex; gap: 6px; flex-wrap: wrap; }
 
 /* Twelve semitones above the root, like a ruler: chord tones are marked. */
-.ladder { display: grid; grid-template-columns: repeat(15, 1fr); border-left: 1px solid var(--rule); }
+.ladder { display: grid; grid-auto-flow: column; grid-auto-columns: minmax(0, 1fr); border-left: 1px solid var(--rule); }
 .ladder span {
   height: 30px;
   display: grid;

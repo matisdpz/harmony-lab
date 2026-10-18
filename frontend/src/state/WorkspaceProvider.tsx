@@ -1,4 +1,5 @@
 import { createContext, useCallback, useContext, useEffect, useLayoutEffect, useMemo, useReducer, useRef, useState, type ReactNode } from 'react'
+import type { PlaybackPattern } from '../model/rhythm'
 import { theoryApi } from '../api/theory'
 import { projectsApi } from '../api/projects'
 import { ApiError, errorMessage, isAbort } from '../api/http'
@@ -37,6 +38,8 @@ interface WorkspaceApi {
   saving: boolean
   conflict: ApiError | null
   select: (id: string | null) => void
+  /** Moves the key and every chord by semitones (spelling handled by the engine). */
+  transpose: (semitones: number) => Promise<void>
   undo: () => void
   redo: () => void
   setName: (name: string) => void
@@ -44,11 +47,12 @@ interface WorkspaceApi {
   setTempo: (bpm: number) => void
   setRegister: (register: RegisterDto) => void
   addChordBySymbol: (symbol: string, index?: number) => Promise<string | null>
-  addChord: (root: string, quality: string, index?: number) => Promise<string | null>
+  addChord: (root: string, quality: string, index?: number, inversion?: number) => Promise<string | null>
   insertChord: (chord: VoicedChord, index?: number) => void
   editChord: (id: string, changes: ChordEdit) => Promise<void>
   shiftOctave: (id: string, octaves: number) => void
   setDuration: (id: string, beats: number) => void
+  setPattern: (id: string, pattern: PlaybackPattern) => void
   replaceChord: (id: string, chord: VoicedChord) => void
   removeChord: (id: string) => void
   duplicateChord: (id: string) => void
@@ -62,6 +66,8 @@ interface WorkspaceApi {
   openProject: (id: string) => Promise<boolean>
   newProject: () => void
   loadExample: () => Promise<void>
+  /** Opens content (e.g. an imported MIDI file) as a new, unsaved project. */
+  loadContent: (content: ProjectContent) => void
   projectRenamed: (project: ProjectResponse) => void
   projectDeleted: (id: string) => void
 }
@@ -190,11 +196,21 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
       (await theoryApi.parseChord({ symbol, register, key, previousVoicing })).chord, index)
   }, [addResolved])
 
-  const addChord = useCallback((root: string, quality: string, index?: number) => {
+  const addChord = useCallback((root: string, quality: string, index?: number, inversion = 0) => {
     const { register, key } = stateRef.current.content
     return addResolved(async (previousVoicing) =>
-      (await theoryApi.resolveChord({ root, quality, inversion: 0, register, key, previousVoicing })).chord, index)
+      (await theoryApi.resolveChord({ root, quality, inversion, register, key, previousVoicing })).chord, index)
   }, [addResolved])
+
+  const transpose = useCallback(async (semitones: number) => {
+    const { key, chords } = stateRef.current.content
+    try {
+      const result = await theoryApi.transpose(key, chords.map(toChordInput), semitones)
+      dispatch({ type: 'transpose', key: result.key, chords: result.chords })
+    } catch (e) {
+      notify('error', `Could not transpose: ${errorMessage(e)}`)
+    }
+  }, [notify])
 
   const editChord = useCallback(async (id: string, changes: ChordEdit) => {
     const slot = stateRef.current.content.chords.find((c) => c.id === id)
@@ -312,6 +328,7 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
     saving,
     conflict,
     select: (id) => dispatch({ type: 'select', id }),
+    transpose,
     undo: () => dispatch({ type: 'undo' }),
     redo: () => dispatch({ type: 'redo' }),
     setName: (name) => dispatch({ type: 'setName', name: name.slice(0, 100) }),
@@ -324,6 +341,7 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
     editChord,
     shiftOctave,
     setDuration: (id, durationBeats) => dispatch({ type: 'setDuration', id, durationBeats }),
+    setPattern: (id, pattern) => dispatch({ type: 'setPattern', id, pattern }),
     replaceChord: (id, chord) => dispatch({ type: 'replaceChord', id, chord }),
     removeChord: (id) => dispatch({ type: 'removeChord', id }),
     duplicateChord: (id) => dispatch({ type: 'duplicateChord', id, newId: newSlotId() }),
@@ -340,6 +358,7 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
       setConflict(null)
     },
     loadExample,
+    loadContent: (content) => dispatch({ type: 'load', projectId: null, version: null, content, pristine: false }),
     projectRenamed: (project) => {
       if (project.id === stateRef.current.projectId) dispatch({ type: 'syncMeta', name: project.name, version: project.version })
     },
@@ -350,7 +369,7 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
       }
     },
   }), [state, content, initializing, pendingIds, analysis, saving, conflict, addChordBySymbol, addChord, insertChord,
-    editChord, shiftOctave, persist, reloadSaved, openProject, loadExample, notify])
+    editChord, shiftOctave, persist, reloadSaved, openProject, loadExample, notify, transpose])
 
   return <WorkspaceContext.Provider value={api}>{children}</WorkspaceContext.Provider>
 }

@@ -51,13 +51,24 @@ public final class ProgressionPresets {
                     List.of(s(2, HALF_DIMINISHED7), s(5, DOMINANT7), s(1, MINOR7), s(1, MINOR7))),
             new Preset("minor-blues", "Minor blues", Mode.MINOR, "12 bars in minor: i7, iv7, VI7 and V7.",
                     List.of(s(1, MINOR7), s(1, MINOR7), s(1, MINOR7), s(1, MINOR7), s(4, MINOR7), s(4, MINOR7),
-                            s(1, MINOR7), s(1, MINOR7), s(6, DOMINANT7), s(5, DOMINANT7), s(1, MINOR7), s(5, DOMINANT7))));
+                            s(1, MINOR7), s(1, MINOR7), s(6, DOMINANT7), s(5, DOMINANT7), s(1, MINOR7), s(5, DOMINANT7))),
+            new Preset("dorian-vamp", "Dorian vamp (i7–IV7)", Mode.DORIAN, "The major IV with a minor tonic is the Dorian sound (\"Oye Como Va\").",
+                    List.of(s(1, MINOR7), s(4, DOMINANT7))),
+            new Preset("phrygian-vamp", "Phrygian vamp (i–♭II)", Mode.PHRYGIAN, "The half-step ♭II above the tonic gives Phrygian its Spanish colour.",
+                    List.of(s(1, MINOR), s(2, MAJOR))),
+            new Preset("lydian-vamp", "Lydian vamp (Imaj7–II)", Mode.LYDIAN, "The major II carries the raised fourth, Lydian's bright note.",
+                    List.of(s(1, MAJOR7), s(2, MAJOR))),
+            new Preset("mixolydian-rock", "Mixolydian rock (I–♭VII–IV–I)", Mode.MIXOLYDIAN, "The ♭VII chord avoids the leading tone, as in many rock songs.",
+                    List.of(s(1, MAJOR), s(7, MAJOR), s(4, MAJOR), s(1, MAJOR))),
+            new Preset("locrian-vamp", "Locrian vamp (iø7–♭IImaj7)", Mode.LOCRIAN, "An unstable tonic over a diminished fifth: Locrian's tense colour.",
+                    List.of(s(1, HALF_DIMINISHED7), s(2, MAJOR7))));
 
     private ProgressionPresets() {
     }
 
+    /** Harmonic and melodic minor keys use the minor-key presets (written with their own accidentals). */
     public static List<Preset> forMode(Mode mode) {
-        return ALL.stream().filter(p -> p.mode() == mode).toList();
+        return ALL.stream().filter(p -> p.mode() == mode.signatureMode()).toList();
     }
 
     public static Preset byId(String id) {
@@ -66,11 +77,13 @@ public final class ProgressionPresets {
     }
 
     public static List<RealizedChord> realize(Preset preset, Key key) {
-        if (preset.mode() != key.mode()) {
-            throw new InvalidMusicInputException(preset.name() + " is a " + preset.mode().label() + "-key progression");
+        if (preset.mode() != key.mode().signatureMode()) {
+            throw new InvalidMusicInputException(preset.name() + " is a " + preset.mode().label() + " progression");
         }
+        // Degrees are read in the preset's own scale (natural minor for minor presets), so VII stays the subtonic.
+        Key scaleKey = new Key(key.tonic(), preset.mode());
         return preset.steps().stream()
-                .map(step -> new RealizedChord(new Chord(key.scale().get(step.degree() - 1), step.quality(), 0), step.beats()))
+                .map(step -> new RealizedChord(new Chord(scaleKey.scale().get(step.degree() - 1), step.quality(), 0), step.beats()))
                 .toList();
     }
 }

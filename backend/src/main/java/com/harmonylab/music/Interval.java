@@ -23,7 +23,13 @@ public record Interval(int degree, int semitones) {
     public static final Interval MINOR_SEVENTH = new Interval(7, 10);
     public static final Interval MAJOR_SEVENTH = new Interval(7, 11);
     public static final Interval PERFECT_OCTAVE = new Interval(8, 12);
+    public static final Interval MINOR_NINTH = new Interval(9, 13);
     public static final Interval MAJOR_NINTH = new Interval(9, 14);
+    public static final Interval AUGMENTED_NINTH = new Interval(9, 15);
+    public static final Interval PERFECT_ELEVENTH = new Interval(11, 17);
+    public static final Interval AUGMENTED_ELEVENTH = new Interval(11, 18);
+    public static final Interval MINOR_THIRTEENTH = new Interval(13, 20);
+    public static final Interval MAJOR_THIRTEENTH = new Interval(13, 21);
 
     /** Semitones of the major/perfect form of each simple degree (index 1..7). */
     private static final int[] REFERENCE_SEMITONES = {0, 0, 2, 4, 5, 7, 9, 11};

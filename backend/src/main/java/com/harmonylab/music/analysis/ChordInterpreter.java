@@ -84,7 +84,7 @@ public final class ChordInterpreter {
 
     private static ChordInterpretation secondaryDominant(Key key, Chord chord, RomanNumeral numeral, Chord next,
                                                          List<NoteName> outside) {
-        if (chord.quality() != ChordQuality.MAJOR && chord.quality() != ChordQuality.DOMINANT7) {
+        if (chord.quality() != ChordQuality.MAJOR && !chord.quality().isDominantType()) {
             return null;
         }
         NoteName target = chord.root().transpose(Interval.PERFECT_FOURTH);
@@ -93,11 +93,11 @@ public final class ChordInterpreter {
             return null;
         }
         Chord targetChord = key.diatonicChord(degree.get(), false);
-        if (targetChord.quality() == ChordQuality.DIMINISHED) {
-            return null; // a diminished triad is not tonicised in common practice
+        if (targetChord.quality() == ChordQuality.DIMINISHED || targetChord.quality() == ChordQuality.AUGMENTED) {
+            return null; // diminished and augmented triads are not tonicised in common practice
         }
         String targetLabel = RomanNumeral.of(targetChord, key).format();
-        String label = (chord.quality() == ChordQuality.DOMINANT7 ? "V7/" : "V/") + targetLabel;
+        String label = (chord.quality() == ChordQuality.MAJOR ? "V/" : "V7/") + targetLabel;
         boolean resolves = next != null && next.root().pitchClass().equals(target.pitchClass());
         String explanation = chord.symbol() + " can be read as " + label + ", the dominant of " + targetChord.symbol()
                 + " (" + targetLabel + "); " + joinNames(outside) + " lies outside " + key + ". "
@@ -108,6 +108,21 @@ public final class ChordInterpreter {
     }
 
     private static FunctionEntry functionByDegree(Mode mode, int degree) {
+        if (!mode.isTonal()) {
+            // Church modes: the final is the tonal centre; the other chords have colour, not functional roles.
+            return degree == 1
+                    ? new FunctionEntry(TONIC, true, null)
+                    : new FunctionEntry(null, false, "in " + mode.label() + ", chords are described by their colour; "
+                    + "tonic/predominant/dominant roles belong to major and minor keys");
+        }
+        if (mode == Mode.HARMONIC_MINOR || mode == Mode.MELODIC_MINOR) {
+            FunctionEntry minor = functionByDegree(Mode.MINOR, degree);
+            return switch (degree) {
+                case 5, 7 -> new FunctionEntry(DOMINANT, true, null); // the raised seventh is a real leading tone
+                case 3 -> new FunctionEntry(TONIC, false, "the augmented III is rare and context-dependent");
+                default -> minor;
+            };
+        }
         if (mode == Mode.MAJOR) {
             return switch (degree) {
                 case 1 -> new FunctionEntry(TONIC, true, null);
@@ -128,6 +143,9 @@ public final class ChordInterpreter {
     }
 
     private static String describeFunction(FunctionEntry entry) {
+        if (entry.function() == null) {
+            return " No conventional function: " + entry.note() + ".";
+        }
         String name = entry.function().name().charAt(0) + entry.function().name().substring(1).toLowerCase();
         return " Conventional function: " + name + (entry.confident() ? "." : " (tentative: " + entry.note() + ").");
     }
