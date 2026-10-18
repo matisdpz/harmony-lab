@@ -1,0 +1,23 @@
+/* Two ways to add a chord, side by side: typing (the fast path) and picking (for discovery). */
+.form {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: 12px 28px;
+}
+.typed { flex: 1 1 320px; min-width: 0; }
+.picked {
+  flex: 0 1 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding-left: 28px;
+  border-left: 1px solid var(--rule);
+}
+.inline { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+.symbolInput { flex: 1 1 160px; font-family: var(--font-score); font-size: 16px; }
+.quality { max-width: 220px; }
+
+@media (max-width: 760px) {
+  .picked { padding-left: 0; border-left: none; }
+}

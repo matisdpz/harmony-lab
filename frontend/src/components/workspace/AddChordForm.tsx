@@ -2,6 +2,8 @@ import { useState, type FormEvent } from 'react'
 import { Plus } from 'lucide-react'
 import { useWorkspace } from '../../state/WorkspaceProvider'
 import { useCatalog } from '../../state/CatalogProvider'
+import { formatMusic } from '../../model/notes'
+import styles from './AddChordForm.module.css'
 
 /** Adds a chord after the selected one (or at the end), either from a typed symbol or from pickers. */
 export function AddChordForm() {
@@ -40,32 +42,38 @@ export function AddChordForm() {
   }
 
   return (
-    <div className="add-chord">
-      <form onSubmit={(e) => void submitSymbol(e)} noValidate style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'flex-start' }}>
-        <div className="field" style={{ flex: '1 1 200px' }}>
-          <label htmlFor="chord-symbol" className="visually-hidden">Chord symbol</label>
-          <input id="chord-symbol" className="input mono" placeholder="Add chord: Dm7, G/B, Ebmaj7…" value={symbol}
-                 onChange={(e) => {
-                   setSymbol(e.target.value)
-                   setError(null)
-                 }}
-                 aria-invalid={error !== null} aria-describedby={error ? 'chord-symbol-error' : undefined} autoComplete="off" />
+    <form className={styles.form} onSubmit={(e) => void submitSymbol(e)} noValidate>
+      <div className={styles.typed}>
+        <div className="field">
+          <label htmlFor="chord-symbol" className="field-label">Chord symbol</label>
+          <div className={styles.inline}>
+            <input id="chord-symbol" className={`input ${styles.symbolInput}`} placeholder="Dm7, G/B, Ebmaj7…" value={symbol}
+                   onChange={(e) => {
+                     setSymbol(e.target.value)
+                     setError(null)
+                   }}
+                   aria-invalid={error !== null} aria-describedby={error ? 'chord-symbol-error' : undefined} autoComplete="off" />
+            <button type="submit" className="btn" disabled={busy}>
+              <Plus size={15} aria-hidden /> Add{insertAt !== undefined ? ' after selected' : ''}
+            </button>
+          </div>
           {error && <span id="chord-symbol-error" className="field-error" role="alert">{error}</span>}
         </div>
-        <button type="submit" className="btn" disabled={busy}>
-          <Plus size={14} aria-hidden /> Add{insertAt !== undefined ? ' after selected' : ''}
-        </button>
-        <span style={{ color: 'var(--text-faint)', fontSize: 12, alignSelf: 'center' }}>or</span>
-        <select className="select" value={root} onChange={(e) => setRoot(e.target.value)} aria-label="Root for new chord">
-          {catalog.roots.map((r) => <option key={r} value={r}>{r}</option>)}
-        </select>
-        <select className="select" value={quality} onChange={(e) => setQuality(e.target.value)} aria-label="Quality for new chord">
-          {catalog.qualities.map((q) => <option key={q.id} value={q.id}>{q.name}</option>)}
-        </select>
-        <button type="button" className="btn" onClick={() => void addPicked()} disabled={busy} aria-label="Add picked chord">
-          <Plus size={14} aria-hidden />
-        </button>
-      </form>
-    </div>
+      </div>
+      <div className={styles.picked} role="group" aria-labelledby="pick-chord-label">
+        <span id="pick-chord-label" className="field-label">Or pick root and quality</span>
+        <div className={styles.inline}>
+          <select className="select" value={root} onChange={(e) => setRoot(e.target.value)} aria-label="Root for new chord">
+            {catalog.roots.map((r) => <option key={r} value={r}>{formatMusic(r)}</option>)}
+          </select>
+          <select className={`select ${styles.quality}`} value={quality} onChange={(e) => setQuality(e.target.value)} aria-label="Quality for new chord">
+            {catalog.qualities.map((q) => <option key={q.id} value={q.id}>{q.name}</option>)}
+          </select>
+          <button type="button" className="btn" onClick={() => void addPicked()} disabled={busy} aria-label="Add picked chord">
+            <Plus size={15} aria-hidden /> Add
+          </button>
+        </div>
+      </div>
+    </form>
   )
 }

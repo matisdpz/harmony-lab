@@ -1,11 +1,14 @@
 import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from 'react'
 
 export type LabelMode = 'chord' | 'all' | 'none'
+export type Theme = 'auto' | 'light' | 'dark'
 
 export interface Settings {
   labelMode: LabelMode
   volumeDb: number
   loop: boolean
+  /** 'auto' follows the operating system; the other two pin the palette. */
+  theme: Theme
 }
 
 interface SettingsApi extends Settings {
@@ -13,7 +16,7 @@ interface SettingsApi extends Settings {
 }
 
 const STORAGE_KEY = 'harmony-lab.settings'
-const DEFAULTS: Settings = { labelMode: 'chord', volumeDb: -8, loop: false }
+const DEFAULTS: Settings = { labelMode: 'chord', volumeDb: -8, loop: false, theme: 'auto' }
 
 const SettingsContext = createContext<SettingsApi | null>(null)
 
@@ -38,6 +41,12 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
     }
   }, [settings])
 
+  // The CSS palette uses light-dark(); data-theme on <html> pins color-scheme, its absence follows the system.
+  // index.html applies the same rule before React loads, so the page never flashes the wrong theme.
+  useEffect(() => {
+    applyTheme(settings.theme)
+  }, [settings.theme])
+
   const api = useMemo<SettingsApi>(() => ({
     ...settings,
     update: (changes) => setSettings((s) => ({ ...s, ...changes })),
@@ -50,4 +59,9 @@ export function useSettings(): SettingsApi {
   const context = useContext(SettingsContext)
   if (!context) throw new Error('useSettings must be used inside <SettingsProvider>')
   return context
+}
+
+export function applyTheme(theme: Theme, root: HTMLElement = document.documentElement): void {
+  if (theme === 'auto') root.removeAttribute('data-theme')
+  else root.setAttribute('data-theme', theme)
 }

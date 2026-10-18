@@ -1,7 +1,8 @@
 import { Link } from 'react-router'
+import { formatMusic, formatMusicProse } from '../model/notes'
 import { AudioWaveform } from 'lucide-react'
 import { useWorkspace } from '../state/WorkspaceProvider'
-import { CategoryBadge, FunctionBadge, KindBadge } from '../components/analysis/Badges'
+import { CategoryBadge, FunctionBadge } from '../components/analysis/Badges'
 import { EmptyState, ErrorBanner, Spinner } from '../components/common/Status'
 import styles from './Pages.module.css'
 
@@ -15,7 +16,7 @@ export function AnalyzerPage() {
         <div>
           <h1>Progression Analyzer</h1>
           <p className={styles.lead}>
-            "{content.name}" in {content.key.tonic} {content.key.mode === 'MAJOR' ? 'major' : 'natural minor'}. Facts are computed from the notes;
+            "{content.name}" in {formatMusic(content.key.tonic)} {content.key.mode === 'MAJOR' ? 'major' : 'natural minor'}. Facts are computed from the notes;
             heuristics apply stylistic conventions and are labelled as such.
           </p>
         </div>
@@ -32,35 +33,35 @@ export function AnalyzerPage() {
 
       {data && content.chords.length > 0 && (
         <>
-          <section className={`panel ${styles.card}`}>
-            <p>{data.summary}</p>
+          <section className={styles.overview}>
+            <p className={styles.summary}>{formatMusicProse(data.summary)}</p>
             <div className={styles.metricsGrid}>
               <Metric value={`${data.metrics.diatonicCount}/${data.metrics.chordCount}`} label="diatonic chords" />
               <Metric value={data.metrics.totalVoiceMovement} label="semitones of voice movement" />
-              <Metric value={data.metrics.averageMovementPerTransition} label="avg movement / transition" />
+              <Metric value={data.metrics.averageMovementPerTransition} label="average movement per transition" />
               <Metric value={`${data.metrics.stepwiseMotions}/${data.metrics.totalMotions}`} label="stepwise voice motions" />
               <Metric value={data.metrics.commonToneTotal} label="common tones (all transitions)" />
-              <Metric value={data.metrics.cadence ?? '—'} label="cadence at the end" />
+              <Metric value={data.metrics.cadence ?? 'None'} label="cadence at the end" />
             </div>
           </section>
 
           <section className={styles.section} aria-label="Chord-by-chord analysis">
             <h2 className={styles.sectionTitle}>Chords</h2>
-            <div className={`panel ${styles.tableWrap}`}>
-              <table className={styles.table} style={{ margin: 12, width: 'calc(100% - 24px)' }}>
+            <div className={styles.tableWrap}>
+              <table className={styles.table}>
                 <thead>
                   <tr><th scope="col">#</th><th scope="col">Chord</th><th scope="col">Numeral</th><th scope="col">Relation</th><th scope="col">Function</th><th scope="col">Outside the scale</th><th scope="col">Explanation</th></tr>
                 </thead>
                 <tbody>
                   {data.chords.map((c) => (
                     <tr key={c.index}>
-                      <td className="mono">{c.index + 1}</td>
-                      <td><strong>{c.symbol}</strong></td>
-                      <td className={`mono ${c.category === 'DIATONIC' ? styles.diatonicLabel : styles.chromatic}`}>{c.label}</td>
+                      <td className={styles.dim}>{c.index + 1}</td>
+                      <td className={styles.noteCell}>{formatMusic(c.symbol)}</td>
+                      <td className={`${styles.romanCell} ${c.category === 'DIATONIC' ? '' : styles.chromatic}`}>{formatMusic(c.label)}</td>
                       <td><CategoryBadge category={c.category} /></td>
                       <td><FunctionBadge fn={c.function} confident={c.functionConfident} /></td>
-                      <td className="mono">{c.notesOutsideScale.join(', ') || '—'}</td>
-                      <td style={{ color: 'var(--text-muted)', minWidth: 260 }}>{c.explanation}</td>
+                      <td className="score">{c.notesOutsideScale.map(formatMusic).join(', ') || '—'}</td>
+                      <td className={styles.explanationCell}>{formatMusicProse(c.explanation)}</td>
                     </tr>
                   ))}
                 </tbody>
@@ -71,22 +72,22 @@ export function AnalyzerPage() {
           {data.transitions.length > 0 && (
             <section className={styles.section} aria-label="Transitions">
               <h2 className={styles.sectionTitle}>Transitions</h2>
-              <div className={`panel ${styles.tableWrap}`}>
-                <table className={styles.table} style={{ margin: 12, width: 'calc(100% - 24px)' }}>
+              <div className={styles.tableWrap}>
+                <table className={styles.table}>
                   <thead>
                     <tr><th scope="col">Move</th><th scope="col">Root motion</th><th scope="col">Common tones</th><th scope="col">Functional label</th><th scope="col">Movement</th><th scope="col">Held</th><th scope="col">Steps</th><th scope="col">Parallel 5/8</th></tr>
                   </thead>
                   <tbody>
                     {data.transitions.map((t) => (
                       <tr key={t.fromIndex}>
-                        <td className="mono">{data.chords[t.fromIndex].symbol} → {data.chords[t.toIndex].symbol}</td>
+                        <td className="score">{formatMusic(data.chords[t.fromIndex].symbol)} → {formatMusic(data.chords[t.toIndex].symbol)}</td>
                         <td>{t.rootMotion}</td>
-                        <td className="mono">{t.commonTones.join(', ') || '—'}</td>
+                        <td className="score">{t.commonTones.map(formatMusic).join(', ') || '—'}</td>
                         <td>{t.functionalLabel ?? '—'}</td>
-                        <td className="mono">{t.voiceLeading?.totalMovement ?? '—'}</td>
-                        <td className="mono">{t.voiceLeading?.heldVoices ?? '—'}</td>
-                        <td className="mono">{t.voiceLeading?.stepwiseVoices ?? '—'}</td>
-                        <td className="mono">{t.voiceLeading?.parallelPerfects ?? '—'}</td>
+                        <td>{t.voiceLeading?.totalMovement ?? '—'}</td>
+                        <td>{t.voiceLeading?.heldVoices ?? '—'}</td>
+                        <td>{t.voiceLeading?.stepwiseVoices ?? '—'}</td>
+                        <td>{t.voiceLeading?.parallelPerfects ?? '—'}</td>
                       </tr>
                     ))}
                   </tbody>
@@ -101,7 +102,7 @@ export function AnalyzerPage() {
                 <h2 className={styles.cardTitle}>{kind === 'FACT' ? 'Facts' : 'Heuristic observations'}</h2>
                 <ul className={styles.observations}>
                   {data.observations.filter((o) => o.kind === kind).map((o, i) => (
-                    <li key={i} className={o.severity === 'WARNING' ? styles.warn : ''}><KindBadge kind={o.kind} /><span>{o.message}</span></li>
+                    <li key={i} className={o.severity === 'WARNING' ? styles.warn : ''}>{formatMusicProse(o.message)}</li>
                   ))}
                   {data.observations.every((o) => o.kind !== kind) && <li className={styles.dim}>None for this progression.</li>}
                 </ul>
@@ -116,7 +117,7 @@ export function AnalyzerPage() {
 
 function Metric({ value, label }: { value: string | number; label: string }) {
   return (
-    <div className={`panel ${styles.metric}`}>
+    <div className={styles.metric}>
       <span className={styles.metricValue}>{value}</span>
       <span className={styles.metricLabel}>{label}</span>
     </div>

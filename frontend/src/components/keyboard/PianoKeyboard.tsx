@@ -1,5 +1,5 @@
 import { memo } from 'react'
-import { isBlackKey, midiName } from '../../model/notes'
+import { formatMusic, isBlackKey, midiName } from '../../model/notes'
 import type { LabelMode } from '../../state/SettingsProvider'
 import styles from './PianoKeyboard.module.css'
 
@@ -85,7 +85,7 @@ export const PianoKeyboard = memo(function PianoKeyboard({
         onClick={onKeyPress ? () => onKeyPress(midi) : undefined}
         tabIndex={onKeyPress ? 0 : -1}
       >
-        {text && <span className={styles.label}>{text}</span>}
+        {text && <span className={styles.label}>{formatMusic(text)}</span>}
       </button>,
     )
     if (!black) whiteIndex += 1

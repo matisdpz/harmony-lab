@@ -90,7 +90,7 @@ export function KeyboardPanel({
                     disabled={startOctave === 0} aria-label="Shift keyboard down an octave">
               <ChevronLeft size={15} />
             </button>
-            <span className="mono" aria-live="polite">C{startOctave}–B{startOctave + octaves - 1}</span>
+            <span aria-live="polite">C{startOctave}–B{startOctave + octaves - 1}</span>
             <button type="button" className="btn btn-ghost btn-icon btn-sm" onClick={() => setStartOctave((o) => Math.min(8 - octaves, o + 1))}
                     disabled={startOctave >= 8 - octaves} aria-label="Shift keyboard up an octave">
               <ChevronRight size={15} />

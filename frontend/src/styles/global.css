@@ -1,37 +1,86 @@
-/* Design tokens: dark, low-glare surfaces with two restrained accents
-   (amber = chord root / primary action, teal = other chord tones). */
-:root {
-  --bg: #111214;
-  --surface-1: #17181b;
-  --surface-2: #1d1f23;
-  --surface-3: #25282d;
-  --surface-hover: #2b2e34;
-  --border: #2a2d33;
-  --border-strong: #3a3e45;
-  --text: #e6e4de;
-  --text-muted: #a4a6ab;
-  --text-faint: #6f7278;
-  --accent: #e3a94b;
-  --accent-strong: #f0b85c;
-  --accent-soft: rgb(227 169 75 / 0.14);
-  --tone: #6fbfae;
-  --tone-soft: rgb(111 191 174 / 0.16);
-  --danger: #e2716a;
-  --danger-soft: rgb(226 113 106 / 0.14);
-  --warning: #d9b45b;
-  --success: #7cc59a;
-  --info: #8fa8d8;
-  --focus: #f0c06f;
-  --radius-sm: 4px;
-  --radius: 6px;
-  --radius-lg: 10px;
-  --shadow: 0 8px 24px rgb(0 0 0 / 0.35);
-  --font-ui: system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-  --font-mono: ui-monospace, 'SF Mono', 'JetBrains Mono', Menlo, Consolas, monospace;
-  --sidebar-width: 224px;
-  --inspector-width: 360px;
-  color-scheme: dark;
+/* Urtext: Harmony Lab reads like an engraved score on cool paper (or, at night, ivory ink on slate).
+   - Ink for text and structure; rules instead of boxes.
+   - One blue for the chord root, the selection and the main action; pale blue for other chord tones.
+   - Red pencil for tensions and errors. Amber pencil only for keyboard focus, so it never looks like a selection.
+   - Chord symbols and Roman numerals are set in a text serif, as in a harmony textbook. */
+@import '@fontsource-variable/atkinson-hyperlegible-next/wght.css';
+@import '@fontsource-variable/source-serif-4/opsz.css';
+
+/* Real accidentals (♭ ♮ ♯ 𝄪 𝄫) from Noto Music. Only those code points use it, and its tall metrics are
+   overridden so a flat never makes a line taller. */
+@font-face {
+  font-family: 'Harmony Accidentals';
+  src: url('@fontsource/noto-music/files/noto-music-music-400-normal.woff2') format('woff2');
+  unicode-range: U+266D-266F, U+1D12A-1D12B;
+  font-display: swap;
+  size-adjust: 112%;
+  ascent-override: 80%;
+  descent-override: 20%;
+  line-gap-override: 0%;
 }
+
+:root {
+  /* Every colour is light-dark(day, night). The browser picks one from the element's color-scheme,
+     which follows the system unless Settings pins it with data-theme on <html>. */
+  color-scheme: light dark;
+
+  --paper: light-dark(#f5f6f3, #1a1f26);
+  --paper-raised: light-dark(#fbfbf9, #222831);
+  --paper-sunk: light-dark(#eceeea, #151a20);
+  --paper-hover: light-dark(#ffffff, #2a313b);
+  --ink: light-dark(#1c2129, #e6e4dc);
+  --ink-muted: light-dark(#4c535d, #b4b8bf);
+  --ink-faint: light-dark(#5e6670, #959ba4);
+  --rule: light-dark(#d3d6da, #343b45);
+  --rule-strong: light-dark(#7a828c, #6f7884);
+
+  --blue: light-dark(#2f4c7a, #8fb3ea);
+  --blue-strong: light-dark(#233a5f, #aac6f0);
+  --blue-wash: light-dark(#e2e8f2, #26354d);
+  --blue-tone: light-dark(#b9cae4, #3b5680);
+  --on-blue: light-dark(#ffffff, #10151c);
+  --red: light-dark(#b8322a, #f08a80);
+  --red-strong: light-dark(#9b2a23, #f4a39b);
+  --red-wash: light-dark(#f6dcd8, #3b2427);
+  --on-red: light-dark(#ffffff, #10151c);
+  --green: light-dark(#2d6a45, #7fc79a);
+  --green-wash: light-dark(#dfeee4, #1f3328);
+  --amber: light-dark(#8a5a00, #e2b45c);
+  --amber-wash: light-dark(#f6ead0, #3a301c);
+  --focus: light-dark(#a8690a, #e2b45c);
+  --veil: light-dark(rgb(28 33 41 / 0.35), rgb(0 0 0 / 0.55));
+  --shadow: 0 10px 30px light-dark(rgb(28 33 41 / 0.18), rgb(0 0 0 / 0.5));
+
+  /* The keyboard is an instrument, not a surface: ivory and ebony in both themes, with fixed role colours. */
+  --kb-ivory: #fbfbf9;
+  --kb-ivory-hover: #ffffff;
+  --kb-ivory-pressed: #e4e6e2;
+  --kb-ebony: #1c2129;
+  --kb-ebony-hover: #2e3540;
+  --kb-label: #5e6670;
+  --kb-label-dark: #1c2129;
+  --kb-label-on-ebony: #d9dde2;
+  --kb-root: #2f4c7a;
+  --kb-tone: #b9cae4;
+  --kb-tone-ebony: #6f8fbf;
+  --kb-safe-dot: #5e6670;
+  --kb-safe-dot-ebony: #c3c9d1;
+  --kb-tension: #b8322a;
+  --kb-tension-label: #9b2a23;
+  --kb-frame: light-dark(#1c2129, #0d1014);
+
+  /* 'Harmony Accidentals' only covers ♭ ♮ ♯ 𝄪 𝄫 (unicode-range), so it is listed first for those glyphs. */
+  --font-ui: 'Harmony Accidentals', 'Atkinson Hyperlegible Next Variable', system-ui, sans-serif;
+  --font-score: 'Harmony Accidentals', 'Source Serif 4 Variable', Georgia, 'Times New Roman', serif;
+  --font-mono: ui-monospace, 'SF Mono', 'JetBrains Mono', Menlo, Consolas, monospace;
+
+  --radius: 2px;
+  --sidebar-width: 216px;
+  --inspector-width: 340px;
+  --gutter: 28px;
+}
+:root[data-theme='light'] { color-scheme: light; }
+:root[data-theme='dark'] { color-scheme: dark; }
 
 *, *::before, *::after { box-sizing: border-box; }
 
@@ -39,11 +88,12 @@ html, body, #root { height: 100%; }
 
 body {
   margin: 0;
-  background: var(--bg);
-  color: var(--text);
+  background: var(--paper);
+  color: var(--ink);
   font-family: var(--font-ui);
   font-size: 14px;
-  line-height: 1.4;
+  line-height: 1.45;
+  font-variant-numeric: tabular-nums;
   -webkit-font-smoothing: antialiased;
 }
 
@@ -65,7 +115,10 @@ button:disabled { cursor: not-allowed; }
   outline-offset: 2px;
 }
 
-.mono { font-family: var(--font-mono); font-variant-numeric: tabular-nums; }
+::selection { background: var(--blue-wash); }
+
+.mono { font-family: var(--font-mono); font-size: 0.92em; }
+.score { font-family: var(--font-score); }
 
 .visually-hidden {
   position: absolute !important;
@@ -84,107 +137,108 @@ button:disabled { cursor: not-allowed; }
   height: 32px;
   padding: 0 12px;
   border-radius: var(--radius);
-  border: 1px solid var(--border-strong);
-  background: var(--surface-3);
-  color: var(--text);
-  font-size: 13px;
+  border: 1px solid var(--rule-strong);
+  background: var(--paper-raised);
+  color: var(--ink);
+  font-size: 14px;
   font-weight: 500;
   white-space: nowrap;
   transition: background 120ms, border-color 120ms, color 120ms;
 }
-.btn:hover:not(:disabled) { background: var(--surface-hover); border-color: #4a4f57; }
-.btn:disabled { opacity: 0.45; }
-.btn-primary { background: var(--accent); border-color: var(--accent); color: #1b1408; }
-.btn-primary:hover:not(:disabled) { background: var(--accent-strong); border-color: var(--accent-strong); }
-.btn-danger { background: var(--danger-soft); border-color: rgb(226 113 106 / 0.5); color: #f0a49f; }
-.btn-danger:hover:not(:disabled) { background: rgb(226 113 106 / 0.24); }
-.btn-ghost { background: transparent; border-color: transparent; color: var(--text-muted); }
-.btn-ghost:hover:not(:disabled) { background: var(--surface-3); color: var(--text); border-color: transparent; }
-.btn-sm { height: 26px; padding: 0 8px; font-size: 12px; }
+.btn:hover:not(:disabled) { border-color: var(--ink); background: var(--paper-hover); }
+.btn:disabled { opacity: 0.4; }
+.btn-primary { background: var(--blue); border-color: var(--blue); color: var(--on-blue); }
+.btn-primary:hover:not(:disabled) { background: var(--blue-strong); border-color: var(--blue-strong); }
+.btn-danger { background: var(--red); border-color: var(--red); color: var(--on-red); }
+.btn-danger:hover:not(:disabled) { background: var(--red-strong); border-color: var(--red-strong); }
+.btn-ghost { background: transparent; border-color: transparent; color: var(--ink-muted); }
+.btn-ghost:hover:not(:disabled) { background: var(--paper-sunk); color: var(--ink); border-color: transparent; }
+.btn-ghost[aria-pressed='true'] { color: var(--blue); background: var(--blue-wash); }
+.btn-sm { height: 28px; padding: 0 8px; font-size: 13px; }
 .btn-icon { width: 32px; padding: 0; }
-.btn-icon.btn-sm { width: 26px; }
+.btn-icon.btn-sm { width: 28px; }
 
 /* ---- form controls ---------------------------------------------------------------------------- */
 .field { display: flex; flex-direction: column; gap: 4px; }
-.field-label { font-size: 11px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: var(--text-faint); }
+.field-label { font-size: 12px; font-weight: 600; color: var(--ink-muted); }
 
 .input, .select {
   height: 32px;
   padding: 0 10px;
   border-radius: var(--radius);
-  border: 1px solid var(--border-strong);
-  background: var(--surface-1);
-  color: var(--text);
-  font-size: 13px;
+  border: 1px solid var(--rule-strong);
+  background: var(--paper-raised);
+  color: var(--ink);
+  font-size: 14px;
   min-width: 0;
 }
 .select { padding-right: 6px; }
-.input:hover, .select:hover { border-color: #4a4f57; }
-.input[aria-invalid='true'] { border-color: var(--danger); }
-.field-error { color: var(--danger); font-size: 12px; }
+.input::placeholder { color: var(--ink-faint); }
+.input:hover, .select:hover { border-color: var(--ink); }
+.input[aria-invalid='true'] { border-color: var(--red); box-shadow: inset 0 -2px 0 var(--red); }
+.field-error { color: var(--red); font-size: 13px; }
 
 /* ---- small shared atoms ----------------------------------------------------------------------- */
+/* A panel is a region of the page, not an object: it opens with a rule, without a box. */
 .panel {
-  background: var(--surface-1);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-lg);
+  background: transparent;
+  border-top: 1px solid var(--ink);
 }
 
 .panel-title {
-  font-size: 11px;
-  font-weight: 600;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: var(--text-faint);
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--ink);
 }
 
 .badge {
   display: inline-flex;
   align-items: center;
   gap: 4px;
-  height: 20px;
+  height: 22px;
   padding: 0 7px;
-  border-radius: 999px;
-  font-size: 11px;
+  border-radius: var(--radius);
+  border: 1px solid var(--rule-strong);
+  font-size: 12px;
   font-weight: 600;
-  letter-spacing: 0.02em;
-  background: var(--surface-3);
-  color: var(--text-muted);
+  color: var(--ink-muted);
   white-space: nowrap;
 }
-.badge-fact { background: rgb(143 168 216 / 0.14); color: var(--info); }
-.badge-heuristic { background: var(--accent-soft); color: var(--accent); }
-.badge-warning { background: var(--danger-soft); color: #f0a49f; }
-.badge-ok { background: rgb(124 197 154 / 0.14); color: var(--success); }
-.badge-tone { background: var(--tone-soft); color: var(--tone); }
+.badge-fact { border-color: var(--ink); color: var(--ink); }
+.badge-heuristic { border-style: dashed; border-color: var(--amber); color: var(--amber); }
+.badge-warning { border-color: var(--red); color: var(--red); background: var(--red-wash); }
+.badge-ok { border-color: var(--green); color: var(--green); }
+.badge-tone { border-color: var(--blue); color: var(--blue); }
 
+/* Segmented choices read as tabs: the chosen one is underlined in blue. */
 .segmented {
   display: inline-flex;
-  background: var(--surface-1);
-  border: 1px solid var(--border-strong);
-  border-radius: var(--radius);
-  padding: 2px;
   gap: 2px;
+  border-bottom: 1px solid var(--rule);
 }
 .segmented button {
-  height: 26px;
-  padding: 0 10px;
-  border-radius: var(--radius-sm);
-  font-size: 12px;
-  color: var(--text-muted);
+  height: 30px;
+  padding: 0 9px;
+  font-size: 14px;
+  color: var(--ink-muted);
+  border-bottom: 2px solid transparent;
+  margin-bottom: -1px;
 }
-.segmented button:hover:not(:disabled) { color: var(--text); background: var(--surface-3); }
-.segmented button[aria-pressed='true'] { background: var(--surface-3); color: var(--text); box-shadow: inset 0 0 0 1px var(--border-strong); }
+.segmented button:hover:not(:disabled) { color: var(--ink); border-bottom-color: var(--rule-strong); }
+.segmented button[aria-pressed='true'] { color: var(--ink); font-weight: 600; border-bottom-color: var(--blue); }
 
 .kbd {
-  font-family: var(--font-mono);
-  font-size: 11px;
-  padding: 1px 5px;
-  border-radius: 3px;
-  border: 1px solid var(--border-strong);
-  color: var(--text-muted);
+  font-family: var(--font-ui);
+  font-size: 12px;
+  font-weight: 600;
+  padding: 0 5px;
+  border-radius: var(--radius);
+  border: 1px solid var(--rule-strong);
+  border-bottom-width: 2px;
+  background: var(--paper-raised);
+  color: var(--ink-muted);
 }
 
 @media (prefers-reduced-motion: reduce) {
-  *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
+  *, *::before, *::after { animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; transition-duration: 0.01ms !important; }
 }

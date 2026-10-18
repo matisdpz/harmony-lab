@@ -8,45 +8,51 @@
   min-height: 100vh;
 }
 
-.header { grid-area: header; padding: 18px 24px 14px; border-bottom: 1px solid var(--border); }
+.header { grid-area: header; padding: 22px var(--gutter) 18px; border-bottom: 1px solid var(--rule); }
 
 .main {
   grid-area: main;
   display: flex;
   flex-direction: column;
-  gap: 18px;
-  padding: 18px 24px 32px;
+  gap: 28px;
+  padding: 20px var(--gutter) 40px;
   min-width: 0;
 }
 
+/* The inspector is the score's margin: notes about the selected chord, set off by a single rule. */
 .inspector {
   grid-area: inspector;
-  border-left: 1px solid var(--border);
-  background: var(--surface-1);
+  border-left: 1px solid var(--rule);
   position: sticky;
   top: 0;
   max-height: 100vh;
   overflow-y: auto;
 }
 
-.keyboardNotes { font-family: var(--font-mono); font-weight: 400; color: var(--text-muted); font-size: 12px; margin-left: 8px; }
+.keyboardNotes { font-weight: 400; color: var(--ink-muted); font-size: 13px; margin-left: 10px; word-spacing: 4px; }
 
+/* Narrower screens: progression, keyboard, then the inspector, so editing the selected chord never
+   means scrolling past the whole analysis. */
 @media (max-width: 1240px) {
-  .page {
-    grid-template-columns: minmax(0, 1fr);
-    grid-template-areas: 'header' 'main' 'inspector';
-    grid-template-rows: auto auto auto;
-  }
+  .page { display: flex; flex-direction: column; }
+  .main { display: contents; }
+  .main > * { margin-inline: var(--gutter); }
+  .main > :first-child { order: 1; margin-top: 20px; }
   .inspector {
+    order: 3;
     position: static;
     max-height: none;
     border-left: none;
-    border-top: 1px solid var(--border);
+    border-top: 1px solid var(--rule);
+    border-bottom: 1px solid var(--rule);
+    margin-block: 24px;
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
   }
+  .main > :nth-child(2) { order: 2; margin-top: 28px; }
+  .main > :nth-child(n + 3) { order: 4; margin-bottom: 28px; }
 }
 
 @media (max-width: 640px) {
-  .header, .main { padding-left: 16px; padding-right: 16px; }
+  .page { --gutter: 16px; }
 }

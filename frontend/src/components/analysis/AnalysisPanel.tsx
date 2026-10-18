@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
+import { formatMusic, formatMusicProse } from '../../model/notes'
 import { AlertTriangle, Check, Play, Square } from 'lucide-react'
 import type { AlternativesResponse, ChordInput, KeyDto, MetricsView } from '../../api/types'
 import { theoryApi } from '../../api/theory'
@@ -49,21 +50,13 @@ function AnalysisView() {
   const data = analysis.data
   return (
     <div className={styles.analysis}>
-      <p className={styles.summary}>{data.summary}</p>
-      <ol className={styles.numerals} aria-label="Roman numerals">
-        {data.chords.map((c) => (
-          <li key={c.index} className={c.category === 'DIATONIC' ? '' : styles.outside}>
-            <span className={styles.numeral}>{c.label}</span>
-            <span className={styles.numeralSymbol}>{c.symbol}</span>
-          </li>
-        ))}
-      </ol>
+      <p className={styles.summary}>{formatMusicProse(data.summary)}</p>
       <ul className={styles.observations}>
         {data.observations.map((o, i) => (
           <li key={i} className={o.severity === 'WARNING' ? styles.warning : ''}>
             <KindBadge kind={o.kind} />
             {o.severity === 'WARNING' && <AlertTriangle size={13} aria-label="warning" className={styles.warnIcon} />}
-            <span>{o.message}</span>
+            <span>{formatMusicProse(o.message)}</span>
           </li>
         ))}
       </ul>
@@ -149,13 +142,13 @@ function AlternativesView({ state }: { state: AlternativesState }) {
               </div>
               <ol className={styles.altChords}>
                 {alt.chords.map((c, j) => (
-                  <li key={j} className={alt.changedIndex === j ? styles.changed : ''}>{c.symbol}</li>
+                  <li key={j} className={alt.changedIndex === j ? styles.changed : ''}>{formatMusic(c.symbol)}</li>
                 ))}
               </ol>
-              <p className={styles.altDescription}>{alt.description}</p>
+              <p className={styles.altDescription}>{formatMusicProse(alt.description)}</p>
               <p className={styles.altMetrics}>
-                movement <span className="mono">{alt.metrics.totalVoiceMovement}</span> · diatonic <span className="mono">{alt.metrics.diatonicCount}/{alt.metrics.chordCount}</span>
-                {alt.metrics.cadence ? ` · ${alt.metrics.cadence}` : ''}
+                {alt.metrics.totalVoiceMovement} semitones of movement, {alt.metrics.diatonicCount} of {alt.metrics.chordCount} chords diatonic
+                {alt.metrics.cadence ? `, ${alt.metrics.cadence}` : ''}
               </p>
             </li>
           )
@@ -216,7 +209,7 @@ function CompareView({ alternatives }: { alternatives: AlternativesResponse | nu
             {ROWS.map((row) => (
               <tr key={row.label}>
                 <th scope="row">{row.label}</th>
-                {columns.map((c) => <td key={c.title} className="mono">{c.metrics ? row.value(c.metrics) : '—'}</td>)}
+                {columns.map((c) => <td key={c.title}>{c.metrics ? row.value(c.metrics) : '—'}</td>)}
               </tr>
             ))}
           </tbody>

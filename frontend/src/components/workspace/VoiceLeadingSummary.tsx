@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { formatMusic, formatMusicProse } from '../../model/notes'
 import { Check, Play, Spline } from 'lucide-react'
 import type { RankedVoicingView } from '../../api/types'
 import { theoryApi } from '../../api/theory'
@@ -57,7 +58,7 @@ export function VoiceLeadingSummary() {
         <p className={styles.note}>This is the first chord, so there is no incoming voice leading. Select a later chord to compare.</p>
       ) : (
         <>
-          <p className={styles.note}>From <strong>{previous.symbol}</strong> to <strong>{selected.symbol}</strong>{transition ? ` — root motion: ${transition.rootMotion}` : ''}.</p>
+          <p className={styles.note}>From <strong className="score">{formatMusic(previous.symbol)}</strong> to <strong className="score">{formatMusic(selected.symbol)}</strong>{transition ? `, root motion: ${transition.rootMotion}` : ''}.</p>
           {vl && (
             <>
               <div className={styles.metrics}>
@@ -68,7 +69,7 @@ export function VoiceLeadingSummary() {
               <div className={styles.motions} aria-label="Voice motions">
                 {vl.motions.map((m, i) => (
                   <span key={i} className={`${styles.motion} ${m.semitones === 0 ? styles.held : Math.abs(m.semitones) > 5 ? styles.leap : ''}`}>
-                    {m.fromNote}→{m.toNote} <span className={styles.dim}>{m.semitones > 0 ? '+' : ''}{m.semitones}</span>
+                    {formatMusic(m.fromNote)} → {formatMusic(m.toNote)} <span className={styles.dim}>{m.semitones > 0 ? '+' : ''}{m.semitones}</span>
                   </span>
                 ))}
               </div>
@@ -86,9 +87,9 @@ export function VoiceLeadingSummary() {
                 return (
                   <li key={c.chord.voicing.join(',')} className={styles.item}>
                     <div className={styles.itemHead}>
-                      <span className="mono" style={{ fontSize: 11, color: 'var(--text-faint)' }}>#{c.rank}</span>
-                      <span className={styles.itemSymbol}>{c.chord.symbol}</span>
-                      <span className="mono" style={{ fontSize: 12 }}>{c.chord.voicingNotes.join(' ')}</span>
+                      <span className={styles.rank}>{c.rank}.</span>
+                      <span className={styles.itemSymbol}>{formatMusic(c.chord.symbol)}</span>
+                      <span className={styles.itemNotes}>{c.chord.voicingNotes.map(formatMusic).join(' ')}</span>
                       <div className={styles.itemActions}>
                         <button type="button" className="btn btn-ghost btn-icon btn-sm" aria-label={`Audition ${previous.symbol} then ${c.chord.symbol}`}
                                 onClick={() => void audio.playSequence([{ notes: previous.voicing, beats: 2 }, { notes: c.chord.voicing, beats: 2 }], content.tempoBpm, { owner: 'vl-preview' })}>
@@ -100,8 +101,8 @@ export function VoiceLeadingSummary() {
                         </button>
                       </div>
                     </div>
-                    <div className={styles.score}>cost <span className="mono">{c.voiceLeading.cost}</span> · moved <span className="mono">{c.voiceLeading.totalMovement}</span> semitones</div>
-                    <ul className={styles.reasons}>{c.reasons.slice(0, 3).map((r) => <li key={r}>{r}</li>)}</ul>
+                    <div className={styles.score}>Cost {c.voiceLeading.cost}, {c.voiceLeading.totalMovement} semitones moved</div>
+                    <ul className={styles.reasons}>{c.reasons.slice(0, 3).map((r) => <li key={r}>{formatMusicProse(r)}</li>)}</ul>
                   </li>
                 )
               })}

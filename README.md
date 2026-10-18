@@ -25,26 +25,27 @@ involved, and every analysis statement is derived from the actual notes.
 | **Voice Leading Explorer** | For any adjacent pair: ranked voicings of the next chord with costs, explanations and a motion diagram; audition and apply. A dynamic-programming optimiser re-voices the whole progression. |
 | **Suggestions** | Ranked, explained alternatives for the selected chord under four objectives: smooth voice leading, stronger resolution, diatonic alternatives, more harmonic colour. Audition or replace with one click. Says so when nothing scores well. |
 | **Alternatives & comparison** | Whole-progression alternatives (re-voiced, or best single change per objective) and a metrics table comparing the current version, the last saved version and an alternative. |
-| **Improvisation** | Loop a preset progression (pop, 50s, jazz ii–V–I, canon, 12-bar blues, minor pop, Andalusian, minor ii–V–i, minor blues — realised in any key), your workspace progression or one you type (`Dm7 G7 Cmaj7`, kept in this browser). The keyboard colours, for the chord that is sounding, the root, chord tones, safe scale notes and **tension notes in red** (avoid notes, b9/#9/b13 on dominants, blue notes), with a reason for each. Play along with the mouse or the computer keyboard (`A W S E D F T G Y H U J K`, `Z`/`X` octave). |
+| **Improvisation** | Loop a preset progression (pop, 50s, jazz ii–V–I, canon, 12-bar blues, minor pop, Andalusian, minor ii–V–i, minor blues — realised in any key), your workspace progression or one you type (`Dm7 G7 Cmaj7`, kept in this browser). For the chord that is sounding, the keyboard marks the root, the chord tones, the safe scale notes (a small dot) and the **tension notes in red** (avoid notes, ♭9/♯9/♭13 on dominants, blue notes), with a reason for each. The next chord is shown beside the current one. Play along with the mouse or the computer keyboard (`A W S E D F T G Y H U J K`, `Z`/`X` octave). |
 | **Saved Projects** | Create, list, open, update, rename, duplicate, delete. Optimistic locking prevents silently overwriting changes made in another tab; unsaved changes are indicated and confirmed before being discarded. |
 
 ## 2. Screenshots
 
 Screenshots of the running application are in [`docs/screenshots`](docs/screenshots):
 
-| Workspace | Alternatives and inspector |
+| Workspace (day) | Workspace (night, looping playback) |
 |---|---|
-| ![Workspace](docs/screenshots/workspace.png) | ![Alternatives](docs/screenshots/workspace-alternatives.png) |
+| ![Workspace: the progression as a lead-sheet line, keyboard, analysis and chord inspector](docs/screenshots/workspace.png) | ![Night theme during looped playback, with repeat signs and the playhead](docs/screenshots/workspace-night.png) |
+| **Alternative progressions** | **Improvisation** |
+| ![Alternatives](docs/screenshots/workspace-alternatives.png) | ![Improvisation](docs/screenshots/improvisation.png) |
 | **Chord Explorer** | **Voice Leading Explorer** |
 | ![Chord Explorer](docs/screenshots/chord-explorer.png) | ![Voice leading](docs/screenshots/voice-leading.png) |
 | **Analyzer** | **Mobile** |
 | ![Analyzer](docs/screenshots/analyzer.png) | ![Mobile](docs/screenshots/mobile.png) |
-| **Improvisation** | |
-| ![Improvisation](docs/screenshots/improvisation.png) | |
 
 **Adding or updating screenshots:** start the app (see below), take a screenshot of the page at a
 1600×1000 window (or 390×844 for mobile), save it as a PNG in `docs/screenshots/` and reference it in the
-table above with a relative path.
+table above with a relative path. Pin the theme in Settings (Day or Night) so the screenshot does not depend
+on the operating system's colour scheme.
 
 ## 3. Architecture overview
 
@@ -95,7 +96,7 @@ harmony-lab/
 
 | Layer | Choice |
 |---|---|
-| Frontend | React 19, TypeScript 6 (strict), Vite 8, React Router 8, Tone.js 15, lucide-react, CSS Modules |
+| Frontend | React 19, TypeScript 6 (strict), Vite 8, React Router 8, Tone.js 15, lucide-react, CSS Modules; self-hosted fonts via Fontsource (Source Serif 4, Atkinson Hyperlegible Next, Noto Music) |
 | Frontend tests | Vitest 5, React Testing Library, user-event, jsdom; oxlint |
 | Backend | Java 21, Spring Boot 4.1 (Web MVC, Validation, Data JPA / Hibernate 7), Flyway, PostgreSQL 17, springdoc-openapi 3.1 |
 | Backend tests | JUnit 6 (Jupiter), AssertJ, Mockito, Spring MockMvc, Testcontainers 2 |
@@ -180,7 +181,9 @@ races), the HTTP error mapping, the keyboard component, and user flows rendered 
 and audio engine mocked at the module boundary: selecting and editing chords, keyboard highlights, reordering
 by button and shortcut, duplicate/delete/undo, chord-symbol and tempo validation, playback calls, save
 success/failure, project list errors with retry, rename validation and confirmed deletion, and the improvisation
-page (guide colours on the keyboard, looped playback, computer-keyboard notes, custom progression validation).
+page (guide colours on the keyboard, looped playback, computer-keyboard notes, custom progression validation),
+the display of real accidentals (`F#m7b5` → F♯m7♭5 in symbols, numerals and prose, without touching words
+such as "Absent"), and theme selection.
 
 ## 11. Accessing the application
 
@@ -243,6 +246,22 @@ traces are never returned; unexpected errors are logged server-side.
 * **Audio.** A single lazily created Tone.js engine (module singleton) started on the first user gesture,
   a soft FM "electric piano" voice, and Transport scheduling in ticks so chords are simultaneous and tempo
   changes apply live.
+* **Visual design ("Urtext").** The interface borrows the conventions of an engraved score instead of a
+  dashboard: the progression is one line of a lead sheet (one measure per chord, width proportional to its
+  beats, beat slashes, barlines, repeat signs when looping, a playhead that crosses the sounding measure),
+  Roman numerals sit under the chords as in a harmony textbook, and regions are separated by rules rather
+  than boxed cards. Colour has one meaning each: blue for the chord root, the selection and the main action;
+  pale blue for other chord tones; red for tensions and errors; amber italics for chords outside the key.
+  Chord symbols and numerals use Source Serif 4, the interface uses Atkinson Hyperlegible Next, and real
+  accidentals (♭ ♯) are displayed through a small `@font-face` built from Noto Music (`formatMusic` in
+  `src/model/notes.ts`; the API and inputs keep ASCII `b`/`#`). Text contrast meets WCAG AA, and every
+  keyboard role also has a shape (notehead mark, dot, red bar) so colour is never the only cue.
+  Tokens and rationale are at the top of `frontend/src/styles/global.css`.
+* **Day and night themes.** Every colour token is written once as `light-dark(day, night)`, so the browser
+  picks the value from the page's `color-scheme`. Settings → Theme offers *Match system* (default), *Day*
+  and *Night*; a pinned choice sets `data-theme` on `<html>`, and a small inline script in `index.html`
+  applies it before the first paint so there is no flash. The piano keyboard deliberately stays ivory and
+  ebony in both themes, with the same role colours, because it represents a physical instrument.
 * **Deliberately not included:** authentication, microservices, caching layers or message brokers. None
   is needed for a single-user local tool.
 

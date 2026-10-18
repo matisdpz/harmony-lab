@@ -11,7 +11,7 @@ import { KeyboardPanel, chordHighlights } from '../components/keyboard/KeyboardP
 import type { KeyHighlight } from '../components/keyboard/PianoKeyboard'
 import { CategoryBadge, FunctionBadge } from '../components/analysis/Badges'
 import { ErrorBanner, Spinner } from '../components/common/Status'
-import { midiName } from '../model/notes'
+import { formatMusic, formatMusicProse, midiName } from '../model/notes'
 import styles from './Pages.module.css'
 
 const INVERSION_NAMES = ['Root position', 'First inversion', 'Second inversion', 'Third inversion']
@@ -91,7 +91,7 @@ export function ExplorerPage() {
         <label className="field">
           <span className="field-label">Root</span>
           <select className="select" aria-label="Root" value={root} onChange={(e) => setRoot(e.target.value)}>
-            {catalog.roots.map((r) => <option key={r} value={r}>{r}</option>)}
+            {catalog.roots.map((r) => <option key={r} value={r}>{formatMusic(r)}</option>)}
           </select>
         </label>
         <label className="field">
@@ -103,7 +103,7 @@ export function ExplorerPage() {
         <label className="field">
           <span className="field-label">Key context</span>
           <select className="select" value={key.tonic} onChange={(e) => setKey({ ...key, tonic: e.target.value })} aria-label="Key tonic">
-            {catalog.keyTonics[key.mode].map((t) => <option key={t} value={t}>{t}</option>)}
+            {catalog.keyTonics[key.mode].map((t) => <option key={t} value={t}>{formatMusic(t)}</option>)}
           </select>
         </label>
         <div className="field">
@@ -123,8 +123,8 @@ export function ExplorerPage() {
             <>
               <div className={styles.cardHeader}>
                 <div>
-                  <h2 className={styles.bigSymbol}>{chord.symbol}</h2>
-                  <p className={styles.lead}>{chord.qualityName} · {chord.notes.join(' ')}</p>
+                  <h2 className={styles.bigSymbol}>{formatMusic(chord.symbol)}</h2>
+                  <p className={styles.lead}>{chord.qualityName}: <span className="score">{chord.notes.map(formatMusic).join(' ')}</span></p>
                 </div>
                 <div className={styles.actions}>
                   <button type="button" className="btn" onClick={() => void audio.playChord(chord.voicing)}><Play size={14} aria-hidden /> Play</button>
@@ -141,14 +141,14 @@ export function ExplorerPage() {
               <div className={styles.ladder} aria-hidden>
                 {Array.from({ length: 15 }, (_, s) => {
                   const tone = chord.intervals.find((i) => i.semitones === s)
-                  return <span key={s} className={tone ? (s === 0 ? styles.ladderRoot : styles.ladderTone) : ''}>{tone ? tone.name : ''}</span>
+                  return <span key={s} className={tone ? (s === 0 ? styles.ladderRoot : styles.ladderTone) : ''}>{tone ? formatMusic(tone.name) : ''}</span>
                 })}
               </div>
               <table className={styles.table}>
                 <thead><tr><th scope="col">Tone</th><th scope="col">Interval above root</th><th scope="col">Semitones</th></tr></thead>
                 <tbody>
                   {chord.intervals.map((i) => (
-                    <tr key={i.note}><td className="mono">{i.note}</td><td>{i.fullName} ({i.name})</td><td className="mono">{i.semitones}</td></tr>
+                    <tr key={i.note}><td className={styles.noteCell}>{formatMusic(i.note)}</td><td>{i.fullName} <span className={styles.dim}>({i.name})</span></td><td>{i.semitones}</td></tr>
                   ))}
                 </tbody>
               </table>
@@ -163,9 +163,9 @@ export function ExplorerPage() {
                               setInversion(inv.inversion)
                               void audio.playChord(inv.voicing)
                             }}>
-                      <span className={styles.inversionSymbol}>{inv.symbol}</span>
+                      <span className={styles.inversionSymbol}>{formatMusic(inv.symbol)}</span>
                       <span className={styles.dim}>{INVERSION_NAMES[inv.inversion]}</span>
-                      <span className="mono">{inv.voicingNotes.join(' ')}</span>
+                      <span>{inv.voicingNotes.map(formatMusic).join(' ')}</span>
                     </button>
                   </li>
                 ))}
@@ -175,20 +175,20 @@ export function ExplorerPage() {
         </section>
 
         <section className={`panel ${styles.card}`} aria-label="Relationship to the key">
-          <h2 className={styles.cardTitle}>In {keyView?.label ?? `${key.tonic} ${key.mode.toLowerCase()}`}</h2>
+          <h2 className={styles.cardTitle}>In {formatMusic(keyView?.label ?? `${key.tonic} ${key.mode.toLowerCase()}`)}</h2>
           {details?.relation && (
             <div className={styles.relation}>
               <div className={styles.badgeRow}>
-                <span className="badge badge-tone mono">{details.relation.label}</span>
+                <span className={styles.romanLabel}>{formatMusic(details.relation.label)}</span>
                 <CategoryBadge category={details.relation.category} />
                 <FunctionBadge fn={details.relation.function} confident={details.relation.functionConfident} />
               </div>
-              <p className={styles.lead}>{details.relation.explanation}</p>
+              <p className={styles.lead}>{formatMusicProse(details.relation.explanation)}</p>
             </div>
           )}
           {keyView && (
             <>
-              <p className={styles.dim}>Scale: <span className="mono">{keyView.scale.join(' ')}</span> · {keyView.signatureText}</p>
+              <p className={styles.dim}>Scale: <span className="score">{keyView.scale.map(formatMusic).join(' ')}</span>, {formatMusicProse(keyView.signatureText)}</p>
               <h3 className="panel-title">Diatonic chords</h3>
               <div className={styles.diatonic}>
                 {[keyView.triads, keyView.sevenths].map((row, r) => (
@@ -197,8 +197,8 @@ export function ExplorerPage() {
                       <button key={d.chord.symbol} type="button" className={styles.diatonicChord}
                               onClick={() => explore(d.chord.root, d.chord.quality)}
                               aria-label={`Explore ${d.chord.symbol} (${d.roman})`}>
-                        <span className="mono">{d.roman}</span>
-                        <strong>{d.chord.symbol}</strong>
+                        <span className={styles.diatonicRoman}>{formatMusic(d.roman)}</span>
+                        <strong>{formatMusic(d.chord.symbol)}</strong>
                       </button>
                     ))}
                   </div>
@@ -212,7 +212,7 @@ export function ExplorerPage() {
       <KeyboardPanel
         highlights={highlights}
         follow={identifyMode ? undefined : chord?.voicing}
-        title={identifyMode ? 'Click keys to choose notes' : chord?.symbol}
+        title={identifyMode ? 'Click keys to choose notes' : chord ? <span className="score">{formatMusic(chord.symbol)}</span> : undefined}
         onKeyPress={identifyMode ? (midi) => {
           setIdentified(null)
           setPicked((p) => (p.includes(midi) ? p.filter((m) => m !== midi) : [...p, midi].slice(-8)))
@@ -235,11 +235,11 @@ export function ExplorerPage() {
         <section className={`panel ${styles.card}`} aria-label="Chord identification">
           <div className={styles.cardHeader}>
             <p className={styles.lead}>
-              Selected: <span className="mono">{picked.length ? [...picked].sort((a, b) => a - b).map(midiName).join(' ') : 'none'}</span>
+              Selected: <span className="score">{picked.length ? [...picked].sort((a, b) => a - b).map((m) => formatMusic(midiName(m))).join(' ') : 'none'}</span>
             </p>
             <div className={styles.actions}>
               <button type="button" className="btn btn-ghost btn-sm" onClick={() => setPicked([])} disabled={!picked.length}><X size={13} aria-hidden /> Clear</button>
-              <button type="button" className="btn btn-primary btn-sm" onClick={() => void identify()} disabled={!picked.length}>Identify</button>
+              <button type="button" className="btn btn-sm" onClick={() => void identify()} disabled={!picked.length}>Identify</button>
             </div>
           </div>
           {identified && (
@@ -249,8 +249,8 @@ export function ExplorerPage() {
                 {identified.candidates.map((c) => (
                   <li key={c.chord.symbol}>
                     <button type="button" className={styles.diatonicChord} onClick={() => explore(c.chord.root, c.chord.quality, c.chord.inversion)}>
-                      <strong>{c.chord.symbol}</strong>
-                      <span className={styles.dim}>{c.explanation}</span>
+                      <strong>{formatMusic(c.chord.symbol)}</strong>
+                      <span className={styles.dim}>{formatMusicProse(c.explanation)}</span>
                     </button>
                   </li>
                 ))}

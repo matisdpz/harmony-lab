@@ -1,7 +1,7 @@
 .backdrop {
   position: fixed;
   inset: 0;
-  background: rgb(0 0 0 / 0.55);
+  background: var(--veil);
   display: grid;
   place-items: center;
   z-index: 60;
@@ -10,22 +10,22 @@
 
 .dialog {
   width: min(420px, 100%);
-  background: var(--surface-2);
-  border: 1px solid var(--border-strong);
-  border-radius: var(--radius-lg);
+  background: var(--paper);
+  border: 1px solid var(--ink);
+  border-radius: var(--radius);
   padding: 20px;
   box-shadow: var(--shadow);
 }
 
 .title {
-  font-size: 15px;
-  font-weight: 600;
+  font-size: 17px;
+  font-weight: 700;
   margin-bottom: 8px;
 }
 
 .message {
-  color: var(--text-muted);
-  font-size: 13px;
+  color: var(--ink-muted);
+  font-size: 14px;
   line-height: 1.5;
 }
 

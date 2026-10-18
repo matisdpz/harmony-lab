@@ -13,31 +13,31 @@
   display: flex;
   align-items: flex-start;
   gap: 10px;
-  padding: 10px 12px;
-  background: var(--surface-3);
-  border: 1px solid var(--border-strong);
-  border-left-width: 3px;
+  padding: 11px 12px;
+  background: var(--paper-raised);
+  border: 1px solid var(--ink);
+  border-left-width: 4px;
   border-radius: var(--radius);
   box-shadow: var(--shadow);
-  font-size: 13px;
+  font-size: 14px;
   animation: slide-in 160ms ease-out;
 }
 
-.success { border-left-color: var(--success); }
-.success svg:first-child { color: var(--success); }
-.error { border-left-color: var(--danger); }
-.error svg:first-child { color: var(--danger); }
-.info { border-left-color: var(--accent); }
-.info svg:first-child { color: var(--accent); }
+.success { border-left-color: var(--green); }
+.success svg:first-child { color: var(--green); }
+.error { border-left-color: var(--red); }
+.error svg:first-child { color: var(--red); }
+.info { border-left-color: var(--blue); }
+.info svg:first-child { color: var(--blue); }
 
 .message { flex: 1; line-height: 1.4; }
 
 .close {
-  color: var(--text-faint);
+  color: var(--ink-muted);
   padding: 2px;
-  border-radius: 4px;
+  border-radius: var(--radius);
 }
-.close:hover { color: var(--text); }
+.close:hover { color: var(--ink); }
 
 @keyframes slide-in {
   from { transform: translateY(6px); opacity: 0; }

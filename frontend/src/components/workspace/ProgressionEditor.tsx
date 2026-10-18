@@ -1,18 +1,25 @@
-import { useState, type DragEvent } from 'react'
+import { useState, type CSSProperties, type DragEvent } from 'react'
 import { ChevronLeft, ChevronRight, Copy, Music, Play, Trash2 } from 'lucide-react'
 import type { ChordAnalysisView } from '../../api/types'
 import type { ChordSlot } from '../../model/workspace'
+import { formatMusic } from '../../model/notes'
 import { useWorkspace } from '../../state/WorkspaceProvider'
+import { useSettings } from '../../state/SettingsProvider'
 import { useAudio } from '../../audio/AudioProvider'
 import { useConfirm } from '../../state/ConfirmProvider'
 import { EmptyState, Spinner } from '../common/Status'
 import { AddChordForm } from './AddChordForm'
 import styles from './ProgressionEditor.module.css'
 
+/**
+ * The progression drawn as one line of a lead sheet: one measure per chord, its width proportional to
+ * the chord's beats, beat slashes on a staff, and the Roman numeral underneath.
+ */
 export function ProgressionEditor() {
   const workspace = useWorkspace()
   const audio = useAudio()
   const confirm = useConfirm()
+  const { loop } = useSettings()
   const { content, state } = workspace
   const chords = content.chords
   const analysis = workspace.analysis.data
@@ -45,54 +52,57 @@ export function ProgressionEditor() {
     <section className={styles.editor} aria-label="Chord progression">
       <div className={styles.toolbar}>
         <h2 className="panel-title">Progression</h2>
+        <SelectionActions />
         <div className={styles.hint}>
-          <span className="kbd">←</span><span className="kbd">→</span> select · <span className="kbd">Alt</span>+arrows move ·
+          <span className="kbd">←</span><span className="kbd">→</span> select, <span className="kbd">Alt</span> + arrows move,
           <span className="kbd">Space</span> play
         </div>
         <button type="button" className="btn btn-ghost btn-sm" onClick={() => void clear()} disabled={chords.length === 0}>
-          <Trash2 size={13} aria-hidden /> Clear
+          <Trash2 size={14} aria-hidden /> Clear
         </button>
       </div>
 
       {chords.length === 0 ? (
         <EmptyState icon={<Music size={22} />} title="No chords yet"
                     action={<button type="button" className="btn" onClick={() => void workspace.loadExample()}>Load example (Am – F – C – G)</button>}>
-          Add a chord below by typing a symbol such as <span className="mono">Dm7</span> or <span className="mono">G/B</span>,
+          Add a chord below by typing a symbol such as <span className="score">Dm7</span> or <span className="score">G/B</span>,
           or start from the example progression.
         </EmptyState>
       ) : (
-        <ol className={styles.strip} onDragLeave={() => setDropIndex(null)}>
-          {chords.map((chord, index) => (
-            <li key={chord.id}
-                className={`${styles.slot} ${dropIndex === index ? styles.dropBefore : ''}`}
+        <div className={styles.scroller}>
+          <ol className={`${styles.strip} ${loop ? styles.looping : ''}`} onDragLeave={() => setDropIndex(null)}>
+            {chords.map((chord, index) => (
+              <li key={chord.id}
+                  className={`${styles.slot} ${dropIndex === index ? styles.dropBefore : ''}`}
+                  onDragOver={(e) => {
+                    e.preventDefault()
+                    setDropIndex(index)
+                  }}
+                  onDrop={(e) => onDrop(e, index)}>
+                <Measure
+                  chord={chord}
+                  index={index}
+                  tempo={content.tempoBpm}
+                  analysis={analysis?.chords[index]?.symbol === chord.symbol ? analysis.chords[index] : undefined}
+                  selected={chord.id === state.selectedId}
+                  playing={playingIndex === index}
+                  pending={workspace.pendingIds.has(chord.id)}
+                  onDragStart={(e) => {
+                    e.dataTransfer.setData('text/plain', chord.id)
+                    e.dataTransfer.effectAllowed = 'move'
+                    setDragId(chord.id)
+                  }}
+                />
+              </li>
+            ))}
+            <li className={`${styles.endDrop} ${dropIndex === chords.length ? styles.dropBefore : ''}`}
                 onDragOver={(e) => {
                   e.preventDefault()
-                  setDropIndex(index)
+                  setDropIndex(chords.length)
                 }}
-                onDrop={(e) => onDrop(e, index)}>
-              <ChordCard
-                chord={chord}
-                index={index}
-                count={chords.length}
-                analysis={analysis?.chords[index]?.symbol === chord.symbol ? analysis.chords[index] : undefined}
-                selected={chord.id === state.selectedId}
-                playing={playingIndex === index}
-                pending={workspace.pendingIds.has(chord.id)}
-                onDragStart={(e) => {
-                  e.dataTransfer.setData('text/plain', chord.id)
-                  e.dataTransfer.effectAllowed = 'move'
-                  setDragId(chord.id)
-                }}
-              />
-            </li>
-          ))}
-          <li className={`${styles.endDrop} ${dropIndex === chords.length ? styles.dropBefore : ''}`}
-              onDragOver={(e) => {
-                e.preventDefault()
-                setDropIndex(chords.length)
-              }}
-              onDrop={(e) => onDrop(e, chords.length)} aria-hidden />
-        </ol>
+                onDrop={(e) => onDrop(e, chords.length)} aria-hidden />
+          </ol>
+        </div>
       )}
 
       <AddChordForm />
@@ -100,10 +110,42 @@ export function ProgressionEditor() {
   )
 }
 
-function ChordCard({ chord, index, count, analysis, selected, playing, pending, onDragStart }: {
+/** Actions on the selected chord live in the toolbar, so selecting a measure never changes its size. */
+function SelectionActions() {
+  const workspace = useWorkspace()
+  const audio = useAudio()
+  const chord = workspace.selected
+  const index = workspace.selectedIndex
+  const count = workspace.content.chords.length
+  if (!chord) return null
+  return (
+    <div className={styles.selection} role="group" aria-label={`Selected chord: ${chord.symbol}`}>
+      <span className={styles.selectionName}>{formatMusic(chord.symbol)}</span>
+      <button type="button" className="btn btn-ghost btn-icon btn-sm" onClick={() => void audio.playChord(chord.voicing)} aria-label={`Play ${chord.symbol}`} title="Play chord">
+        <Play size={14} />
+      </button>
+      <button type="button" className="btn btn-ghost btn-icon btn-sm" onClick={() => workspace.moveChord(chord.id, index - 1)}
+              disabled={index === 0} aria-label="Move left" title="Move left (Alt+←)">
+        <ChevronLeft size={15} />
+      </button>
+      <button type="button" className="btn btn-ghost btn-icon btn-sm" onClick={() => workspace.moveChord(chord.id, index + 1)}
+              disabled={index === count - 1} aria-label="Move right" title="Move right (Alt+→)">
+        <ChevronRight size={15} />
+      </button>
+      <button type="button" className="btn btn-ghost btn-icon btn-sm" onClick={() => workspace.duplicateChord(chord.id)} aria-label="Duplicate chord" title="Duplicate">
+        <Copy size={14} />
+      </button>
+      <button type="button" className="btn btn-ghost btn-icon btn-sm" onClick={() => workspace.removeChord(chord.id)} aria-label="Remove chord" title="Remove">
+        <Trash2 size={14} />
+      </button>
+    </div>
+  )
+}
+
+function Measure({ chord, index, tempo, analysis, selected, playing, pending, onDragStart }: {
   chord: ChordSlot
   index: number
-  count: number
+  tempo: number
   analysis?: ChordAnalysisView
   selected: boolean
   playing: boolean
@@ -111,43 +153,28 @@ function ChordCard({ chord, index, count, analysis, selected, playing, pending, 
   onDragStart: (e: DragEvent) => void
 }) {
   const workspace = useWorkspace()
-  const audio = useAudio()
   const category = analysis?.category
+  const beats = chord.durationBeats
+  // --beats sets the measure width; --duration lets the playhead cross the measure in real time.
+  const style = { '--beats': beats, '--duration': `${(beats * 60) / tempo}s` } as CSSProperties
   return (
-    <div className={`${styles.card} ${selected ? styles.selected : ''} ${playing ? styles.playing : ''}`}
-         draggable onDragStart={onDragStart} data-testid="chord-card">
+    <div className={`${styles.measure} ${selected ? styles.selected : ''} ${playing ? styles.playing : ''}`}
+         style={style} draggable onDragStart={onDragStart} data-testid="chord-card">
       <button type="button" className={styles.select} onClick={() => workspace.select(chord.id)}
               aria-pressed={selected} aria-label={`Chord ${index + 1}: ${chord.symbol}`}>
-        <span className={styles.index}>{index + 1}</span>
-        <span className={styles.symbol}>{chord.symbol}</span>
-        <span className={`${styles.roman} ${category && category !== 'DIATONIC' ? styles.chromatic : ''}`}>
-          {analysis ? analysis.label : '·'}
+        <span className={styles.number}>{index + 1}</span>
+        <span className={styles.symbol}>{formatMusic(chord.symbol)}</span>
+        <span className={styles.staff} aria-hidden>
+          {Array.from({ length: beats }, (_, i) => <span key={i} className={styles.slash} />)}
+          {playing && <span className={styles.playhead} />}
         </span>
-        <span className={styles.notes}>{chord.notesFromBass.join(' ')}</span>
-        <span className={styles.beats}>{chord.durationBeats} beat{chord.durationBeats === 1 ? '' : 's'}</span>
+        <span className={styles.beats}>{beats} beat{beats === 1 ? '' : 's'}</span>
+        <span className={`${styles.roman} ${category && category !== 'DIATONIC' ? styles.chromatic : ''}`}>
+          {analysis ? formatMusic(analysis.label) : ' '}
+        </span>
+        <span className={styles.notes}>{chord.notesFromBass.map(formatMusic).join(' ')}</span>
         {pending && <span className={styles.pending}><Spinner label="Updating" /></span>}
       </button>
-      {selected && (
-        <div className={styles.cardActions}>
-          <button type="button" className="btn btn-ghost btn-icon btn-sm" onClick={() => void audio.playChord(chord.voicing)} aria-label={`Play ${chord.symbol}`}>
-            <Play size={13} />
-          </button>
-          <button type="button" className="btn btn-ghost btn-icon btn-sm" onClick={() => workspace.moveChord(chord.id, index - 1)}
-                  disabled={index === 0} aria-label="Move left">
-            <ChevronLeft size={14} />
-          </button>
-          <button type="button" className="btn btn-ghost btn-icon btn-sm" onClick={() => workspace.moveChord(chord.id, index + 1)}
-                  disabled={index === count - 1} aria-label="Move right">
-            <ChevronRight size={14} />
-          </button>
-          <button type="button" className="btn btn-ghost btn-icon btn-sm" onClick={() => workspace.duplicateChord(chord.id)} aria-label="Duplicate chord">
-            <Copy size={13} />
-          </button>
-          <button type="button" className="btn btn-ghost btn-icon btn-sm" onClick={() => workspace.removeChord(chord.id)} aria-label="Remove chord">
-            <Trash2 size={13} />
-          </button>
-        </div>
-      )}
     </div>
   )
 }

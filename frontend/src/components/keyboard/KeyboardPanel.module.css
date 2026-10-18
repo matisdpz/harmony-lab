@@ -1,52 +1,47 @@
-.panel {
-  background: var(--surface-1);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-lg);
-  overflow: hidden;
-}
+.panel { display: flex; flex-direction: column; }
 
 .toolbar {
   display: flex;
   align-items: center;
   flex-wrap: wrap;
-  gap: 8px 14px;
-  padding: 8px 10px 8px 14px;
-  border-bottom: 1px solid var(--border);
+  gap: 8px 16px;
+  padding: 0 0 10px;
 }
 
-.title { font-size: 13px; font-weight: 600; min-width: 0; }
+.title { font-size: 17px; font-weight: 600; min-width: 0; }
+.title :global(.score) { font-size: 20px; }
 
 .legend {
   display: flex;
   align-items: center;
   gap: 6px;
-  font-size: 11px;
-  color: var(--text-faint);
+  font-size: 12px;
+  color: var(--ink-muted);
   margin-right: auto;
 }
-.swatchRoot, .swatchTone { width: 10px; height: 10px; border-radius: 2px; display: inline-block; }
-.swatchRoot { background: var(--accent); }
-.swatchTone { background: var(--tone); margin-left: 6px; }
-.swatchScale, .swatchTension { width: 10px; height: 10px; border-radius: 2px; display: inline-block; margin-left: 6px; }
-.swatchScale { background: #c5cfee; }
-.swatchTension { background: #e8857d; }
+.swatchRoot, .swatchTone, .swatchScale, .swatchTension { width: 12px; height: 12px; display: inline-block; flex-shrink: 0; }
+.swatchRoot { background: var(--kb-root); }
+.swatchTone { background: var(--kb-tone); margin-left: 8px; }
+.swatchScale { margin-left: 8px; background: radial-gradient(circle, var(--kb-safe-dot) 3px, var(--kb-ivory) 3.5px); box-shadow: inset 0 0 0 1px var(--rule-strong); }
+.swatchTension { margin-left: 8px; background: var(--kb-ivory); box-shadow: inset 0 0 0 1px var(--rule-strong), inset 0 -3px 0 var(--kb-tension); }
 
-.controls { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; }
+.controls { display: flex; align-items: center; flex-wrap: wrap; gap: 10px; }
 
 .range {
   display: flex;
   align-items: center;
   gap: 2px;
-  font-size: 12px;
-  color: var(--text-muted);
+  font-size: 13px;
+  color: var(--ink-muted);
 }
-.range span { min-width: 60px; text-align: center; }
+.range span { min-width: 56px; text-align: center; }
 
 .notice {
-  padding: 6px 14px;
-  font-size: 12px;
-  color: var(--warning);
-  background: rgb(217 180 91 / 0.08);
+  padding: 6px 10px;
+  margin-bottom: 8px;
+  font-size: 13px;
+  color: var(--amber);
+  background: var(--amber-wash);
 }
 
 @media (max-width: 640px) {

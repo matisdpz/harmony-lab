@@ -2,8 +2,8 @@
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  color: var(--text-faint);
-  font-size: 12px;
+  color: var(--ink-muted);
+  font-size: 13px;
 }
 
 .spin { animation: spin 0.9s linear infinite; }
@@ -13,28 +13,26 @@
 .empty {
   display: flex;
   flex-direction: column;
-  align-items: center;
-  text-align: center;
+  align-items: flex-start;
   gap: 6px;
-  padding: 28px 16px;
-  color: var(--text-muted);
+  padding: 24px 0;
+  color: var(--ink-muted);
 }
 
-.emptyIcon { color: var(--text-faint); margin-bottom: 4px; }
-.emptyTitle { color: var(--text); font-weight: 600; font-size: 14px; }
-.emptyText { font-size: 13px; max-width: 46ch; line-height: 1.5; }
-.emptyAction { margin-top: 10px; display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; }
+.emptyIcon { color: var(--ink-faint); margin-bottom: 4px; }
+.emptyTitle { color: var(--ink); font-weight: 700; font-size: 16px; }
+.emptyText { font-size: 14px; max-width: 52ch; line-height: 1.5; }
+.emptyAction { margin-top: 10px; display: flex; gap: 8px; flex-wrap: wrap; }
 
 .error {
   display: flex;
   align-items: center;
   gap: 10px;
   padding: 10px 12px;
-  border-radius: var(--radius);
-  background: var(--danger-soft);
-  border: 1px solid rgb(226 113 106 / 0.35);
-  color: #f2b7b2;
-  font-size: 13px;
+  border-left: 3px solid var(--red);
+  background: var(--red-wash);
+  color: var(--red-strong);
+  font-size: 14px;
 }
 .error svg { flex-shrink: 0; }
 .errorText { flex: 1; line-height: 1.4; }

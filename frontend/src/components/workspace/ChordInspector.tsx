@@ -1,4 +1,5 @@
 import { ArrowDown, ArrowUp, MousePointerClick, Play } from 'lucide-react'
+import { formatMusic, formatMusicProse } from '../../model/notes'
 import type { VoicingStyle } from '../../api/types'
 import { useWorkspace } from '../../state/WorkspaceProvider'
 import { qualityById, useCatalog } from '../../state/CatalogProvider'
@@ -40,8 +41,8 @@ export function ChordInspector() {
     <section className={styles.section} aria-label="Selected chord">
       <div className={styles.chordHeader}>
         <div>
-          <h2 className={styles.symbol}>{chord.symbol}</h2>
-          <p className={styles.sub}>{chord.qualityName}{chord.inversion > 0 ? ` · ${INVERSION_LABELS[chord.inversion]} inversion` : ''}</p>
+          <h2 className={styles.symbol}>{formatMusic(chord.symbol)}</h2>
+          <p className={styles.sub}>{chord.qualityName}{chord.inversion > 0 ? `, ${INVERSION_LABELS[chord.inversion].toLowerCase()} inversion` : ''}</p>
         </div>
         <button type="button" className="btn" onClick={() => void audio.playChord(chord.voicing)} aria-label="Play selected chord">
           <Play size={14} aria-hidden /> Play
@@ -51,11 +52,11 @@ export function ChordInspector() {
       {matching && (
         <div className={styles.analysis}>
           <div className={styles.badges}>
-            <span className={`badge ${styles.roman}`}>{matching.label}</span>
+            <span className={styles.roman}>{formatMusic(matching.label)}</span>
             <CategoryBadge category={matching.category} />
             <FunctionBadge fn={matching.function} confident={matching.functionConfident} />
           </div>
-          <p className={styles.explanation}>{matching.explanation}</p>
+          <p className={styles.explanation}>{formatMusicProse(matching.explanation)}</p>
         </div>
       )}
 
@@ -67,9 +68,9 @@ export function ChordInspector() {
         <tbody>
           {chord.intervals.map((interval) => (
             <tr key={interval.note} className={interval.note === chord.root ? styles.rootRow : undefined}>
-              <td className="mono">{interval.note}</td>
+              <td className={styles.noteCell}>{formatMusic(interval.note)}</td>
               <td>{interval.fullName} <span className={styles.dim}>({interval.name})</span></td>
-              <td className="mono">{interval.semitones}</td>
+              <td>{interval.semitones}</td>
             </tr>
           ))}
         </tbody>
@@ -77,7 +78,7 @@ export function ChordInspector() {
 
       <p className={styles.voicing}>
         <span className="field-label">Voicing</span>
-        <span className="mono">{chord.voicingNotes.join('  ')}</span>
+        <span className={styles.voicingNotes}>{chord.voicingNotes.map(formatMusic).join(' ')}</span>
         <span className={`mono ${styles.dim}`}>MIDI {chord.voicing.join(', ')}</span>
       </p>
 
@@ -88,7 +89,7 @@ export function ChordInspector() {
             <span className="field-label">Root</span>
             <select className="select" aria-label="Root" value={chord.root} onChange={(e) => void workspace.editChord(chord.id, { root: e.target.value })}>
               {!catalog.roots.includes(chord.root) && <option value={chord.root}>{chord.root}</option>}
-              {catalog.roots.map((r) => <option key={r} value={r}>{r}</option>)}
+              {catalog.roots.map((r) => <option key={r} value={r}>{formatMusic(r)}</option>)}
             </select>
           </label>
           <label className="field" style={{ flex: 1 }}>

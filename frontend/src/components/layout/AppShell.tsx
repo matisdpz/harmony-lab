@@ -1,8 +1,9 @@
 import { useEffect, useState } from 'react'
 import { NavLink, Outlet } from 'react-router'
 import {
-  AudioWaveform, BookOpenText, FolderOpen, GitCompareArrows, KeyboardMusic, LayoutPanelTop, Menu, Plus, Settings, Spline, X,
+  AudioWaveform, BookOpenText, FolderOpen, KeyboardMusic, LayoutPanelTop, Menu, Plus, Settings, Spline, X,
 } from 'lucide-react'
+import { formatMusic } from '../../model/notes'
 import { useWorkspace } from '../../state/WorkspaceProvider'
 import { useProjects } from '../../state/ProjectsProvider'
 import { useProjectSwitching } from './useOpenProject'
@@ -67,7 +68,6 @@ export function AppShell() {
         <div className={styles.projects}>
           <div className={styles.projectsHeader}>
             <span className="panel-title">Saved projects</span>
-            <GitCompareArrows size={13} aria-hidden className={styles.dim} />
           </div>
           {loading && projects.length === 0 && <p className={styles.dim}>Loading…</p>}
           {!loading && projects.length === 0 && <p className={styles.dim}>Nothing saved yet.</p>}
@@ -85,7 +85,7 @@ export function AppShell() {
                       {project.name}
                       {current && workspace.dirty && <span className={styles.dirtyDot} title="Unsaved changes" aria-label="unsaved changes" />}
                     </span>
-                    <span className={styles.projectMeta}>{project.keyLabel} · {project.chordCount} chords</span>
+                    <span className={styles.projectMeta}>{formatMusic(project.keyLabel)}, {project.chordCount} chords</span>
                   </button>
                 </li>
               )
@@ -112,10 +112,12 @@ export function AppShell() {
 function Wordmark() {
   return (
     <span className={styles.wordmark}>
-      <svg width="20" height="20" viewBox="0 0 32 32" aria-hidden>
-        <rect x="5" y="8" width="5" height="18" rx="1.5" fill="var(--accent)" />
-        <rect x="13.5" y="13" width="5" height="13" rx="1.5" fill="var(--text)" />
-        <rect x="22" y="5" width="5" height="21" rx="1.5" fill="var(--tone)" />
+      {/* A root-position triad on a staff: the root in blue, as on the keyboard. */}
+      <svg width="28" height="28" viewBox="0 0 32 32" aria-hidden>
+        <path d="M6 8.5h20M6 13.5h20M6 18.5h20M6 23.5h20" stroke="var(--rule-strong)" strokeWidth="1" />
+        <ellipse cx="16" cy="23.5" rx="4.6" ry="3.2" transform="rotate(-22 16 23.5)" fill="var(--blue)" />
+        <ellipse cx="16" cy="18.5" rx="4.6" ry="3.2" transform="rotate(-22 16 18.5)" fill="var(--ink)" />
+        <ellipse cx="16" cy="13.5" rx="4.6" ry="3.2" transform="rotate(-22 16 13.5)" fill="var(--ink)" />
       </svg>
       Harmony Lab
     </span>

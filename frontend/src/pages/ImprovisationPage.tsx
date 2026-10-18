@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState, type CSSProperties } from 'react'
 import { Keyboard, Play, Square, Trash2 } from 'lucide-react'
 import type { ChordInput, ImprovisationResponse, KeyDto, Mode, PresetView } from '../api/types'
 import { theoryApi } from '../api/theory'
@@ -14,7 +14,7 @@ import { CustomProgressionForm } from '../components/improvisation/CustomProgres
 import { NoteGuide } from '../components/improvisation/NoteGuide'
 import { loadCustomProgressions, saveCustomProgressions, type CustomProgression } from '../components/improvisation/customProgressions'
 import { useComputerKeyboard } from '../components/improvisation/useComputerKeyboard'
-import { midiName } from '../model/notes'
+import { formatMusic, formatMusicProse, midiName } from '../model/notes'
 import styles from './Pages.module.css'
 import own from '../components/improvisation/Improvisation.module.css'
 
@@ -152,12 +152,12 @@ export function ImprovisationPage() {
       </header>
 
       <div className={own.layout}>
-        <aside className={`panel ${own.sidebar}`} aria-label="Progressions">
+        <aside className={own.sidebar} aria-label="Progressions">
           <div className={styles.controlsRow}>
             <label className="field">
               <span className="field-label">Key</span>
               <select className="select" aria-label="Key tonic" value={key.tonic} onChange={(e) => setKey({ ...key, tonic: e.target.value })}>
-                {catalog.keyTonics[key.mode].map((t) => <option key={t} value={t}>{t}</option>)}
+                {catalog.keyTonics[key.mode].map((t) => <option key={t} value={t}>{formatMusic(t)}</option>)}
               </select>
             </label>
             <div className="field">
@@ -176,7 +176,7 @@ export function ImprovisationPage() {
                 <button type="button" className={own.source} aria-pressed={source?.kind === 'preset' && source.id === p.id}
                         onClick={() => setSource({ kind: 'preset', id: p.id })}>
                   <span>{p.name}</span>
-                  <span>{p.chords.map((c) => c.symbol.split('/')[0]).join(' ')}</span>
+                  <span>{p.chords.map((c) => formatMusic(c.symbol.split('/')[0])).join(' ')}</span>
                 </button>
               </li>
             ))}
@@ -188,7 +188,7 @@ export function ImprovisationPage() {
               <button type="button" className={own.source} aria-pressed={source?.kind === 'workspace'}
                       disabled={workspace.content.chords.length === 0} onClick={() => setSource({ kind: 'workspace' })}>
                 <span>Workspace progression</span>
-                <span>{workspace.content.chords.map((c) => c.symbol).join(' ') || 'empty'}</span>
+                <span>{workspace.content.chords.map((c) => formatMusic(c.symbol)).join(' ') || 'empty'}</span>
               </button>
             </li>
             {custom.map((p) => (
@@ -196,7 +196,7 @@ export function ImprovisationPage() {
                 <button type="button" className={own.source} aria-pressed={source?.kind === 'custom' && source.id === p.id}
                         onClick={() => setSource({ kind: 'custom', id: p.id })}>
                   <span>{p.name}</span>
-                  <span>{p.symbols.join(' ')}</span>
+                  <span>{p.symbols.map(formatMusic).join(' ')}</span>
                 </button>
                 <button type="button" className="btn btn-ghost btn-icon" aria-label={`Delete ${p.name}`}
                         onClick={() => {
@@ -215,19 +215,19 @@ export function ImprovisationPage() {
         </aside>
 
         <div className={own.main}>
-          <div className={`panel ${own.transport}`}>
-            <button type="button" className={`btn ${playing ? '' : 'btn-primary'}`} onClick={togglePlay} disabled={!data}>
+          <div className={own.transport}>
+            <button type="button" className={`btn btn-primary ${own.play}`} onClick={togglePlay} disabled={!data}>
               {playing ? <><Square size={14} aria-hidden /> Stop</> : <><Play size={14} aria-hidden /> Play loop</>}
             </button>
             <label className="field">
               <span className="field-label">Tempo (BPM)</span>
-              <input className={`input mono ${own.tempo}`} inputMode="numeric" value={tempoText} aria-invalid={tempoError !== null}
+              <input className={`input ${own.tempo}`} inputMode="numeric" value={tempoText} aria-invalid={tempoError !== null}
                      onChange={(e) => {
                        setTempoText(e.target.value)
                        if (validateTempo(e.target.value) === null) audio.setTempo(Number(e.target.value))
                      }} />
             </label>
-            <p className={own.description}>{request?.description}</p>
+            <p className={own.description}>{request?.description ? formatMusicProse(request.description) : null}</p>
             {loading && <Spinner label="Preparing" />}
           </div>
           {tempoError && <p className="field-error" role="alert">{tempoError}</p>}
@@ -238,14 +238,14 @@ export function ImprovisationPage() {
             <>
               <ol className={own.strip} aria-label="Progression">
                 {data.chords.map((c, i) => (
-                  <li key={i}>
+                  <li key={i} style={{ '--beats': c.chord.durationBeats ?? 4 } as CSSProperties}>
                     <button type="button" aria-pressed={i === current} className={`${own.chordButton} ${playing && i === current ? own.playing : ''}`}
                             onClick={() => {
                               setSelected(i)
                               if (!playing) void audio.playChord(c.chord.voicing)
                             }}
                             aria-label={`Chord ${i + 1}: ${c.chord.symbol}`}>
-                      <strong>{c.chord.symbol}</strong>
+                      <strong>{formatMusic(c.chord.symbol)}</strong>
                       <span>{c.chord.durationBeats ?? 4} beats</span>
                     </button>
                   </li>
@@ -253,10 +253,10 @@ export function ImprovisationPage() {
               </ol>
 
               <div className={own.now} aria-live="polite">
-                <strong>{currentChord.chord.symbol}</strong>
-                {nextChord && <span className={own.next}>next: {nextChord.chord.symbol}</span>}
+                <strong className={own.nowChord}>{formatMusic(currentChord.chord.symbol)}</strong>
+                {nextChord && <span className={own.next}>then <strong>{formatMusic(nextChord.chord.symbol)}</strong></span>}
                 <span className={own.keysHint}>
-                  <Keyboard size={13} aria-hidden /> Play along with A W S E D F T G Y H U J K (from {midiName(base)}), Z / X change octave, Space plays or stops.
+                  <Keyboard size={13} aria-hidden /> Play along with A W S E D F T G Y H U J K (from {formatMusic(midiName(base))}), Z / X change octave, Space plays or stops.
                 </span>
               </div>
 
@@ -264,7 +264,7 @@ export function ImprovisationPage() {
                 highlights={chordHighlights(null)}
                 pitchClassHighlights={guideHighlights}
                 legend="improvisation"
-                title={`Notes over ${currentChord.chord.symbol}`}
+                title={<>Notes over <span className="score">{formatMusic(currentChord.chord.symbol)}</span></>}
                 label="Improvisation keyboard"
               />
               <NoteGuide guide={currentChord.guide} />

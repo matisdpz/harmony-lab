@@ -7,6 +7,7 @@ import { SuggestionsPanel } from '../components/workspace/SuggestionsPanel'
 import { VoiceLeadingSummary } from '../components/workspace/VoiceLeadingSummary'
 import { AnalysisPanel } from '../components/analysis/AnalysisPanel'
 import { KeyboardPanel, chordHighlights } from '../components/keyboard/KeyboardPanel'
+import { formatMusic } from '../model/notes'
 import { Spinner } from '../components/common/Status'
 import { useProgressionPlayback } from './usePlayback'
 import { useWorkspaceShortcuts } from './useWorkspaceShortcuts'
@@ -32,7 +33,7 @@ export function WorkspacePage() {
         <KeyboardPanel
           highlights={chordHighlights(shown)}
           follow={shown?.voicing}
-          title={shown ? <>{shown.symbol} <span className={styles.keyboardNotes}>{shown.voicingNotes.join(' · ')}</span></> : 'Keyboard'}
+          title={shown ? <><span className="score">{formatMusic(shown.symbol)}</span> <span className={styles.keyboardNotes}>{shown.voicingNotes.map(formatMusic).join(' ')}</span></> : 'Keyboard'}
           label="Piano keyboard showing the selected chord"
         />
         <AnalysisPanel />

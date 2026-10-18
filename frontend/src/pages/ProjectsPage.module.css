@@ -1,11 +1,14 @@
-.list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
-.row { display: flex; align-items: center; gap: 16px; padding: 14px 16px; }
+/* Projects are a ruled list, like a table of contents. */
+.list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; border-top: 1px solid var(--ink); }
+.list:empty { display: none; }
+.row { display: flex; align-items: center; gap: 16px; padding: 14px 4px; border-bottom: 1px solid var(--rule); }
+.row:hover { background: var(--paper-sunk); }
 .row[aria-busy='true'] { opacity: 0.6; }
-.open { border-color: rgb(111 191 174 / 0.4); }
+.open { box-shadow: inset 3px 0 0 var(--blue); padding-left: 14px; }
 .info { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 3px; }
-.name { font-size: 15px; font-weight: 600; display: flex; align-items: center; gap: 8px; }
-.meta { font-size: 12px; color: var(--text-faint); }
-.preview { font-size: 12px; color: var(--text-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.name { font-family: var(--font-score); font-size: 20px; font-weight: 600; display: flex; align-items: center; gap: 10px; }
+.meta { font-size: 13px; color: var(--ink-muted); }
+.preview { font-family: var(--font-score); font-size: 15px; color: var(--ink); white-space: pre; overflow: hidden; text-overflow: ellipsis; }
 .actions { display: flex; gap: 4px; flex-shrink: 0; }
 .renameForm { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
 .renameForm .input { min-width: 220px; }

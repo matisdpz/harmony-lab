@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
+import { formatMusic, formatMusicProse } from '../../model/notes'
 import { Lightbulb, Play, Replace } from 'lucide-react'
 import type { Objective, SuggestionResponse } from '../../api/types'
 import { theoryApi } from '../../api/theory'
@@ -99,8 +100,8 @@ export function SuggestionsPanel() {
               {result.suggestions.map((s) => (
                 <li key={`${s.chord.symbol}-${s.chord.voicing.join('.')}`} className={styles.item}>
                   <div className={styles.itemHead}>
-                    <span className={styles.itemSymbol}>{s.chord.symbol}</span>
-                    <span className={styles.itemRoman}>{s.romanLabel}</span>
+                    <span className={styles.itemSymbol}>{formatMusic(s.chord.symbol)}</span>
+                    <span className={styles.itemRoman}>{formatMusic(s.romanLabel)}</span>
                     <div className={styles.itemActions}>
                       <button type="button" className="btn btn-ghost btn-icon btn-sm" onClick={() => void audio.playChord(s.chord.voicing)}
                               aria-label={`Audition ${s.chord.symbol}`}>
@@ -117,11 +118,11 @@ export function SuggestionsPanel() {
                   <div className={styles.score} title={Object.entries(s.breakdown).map(([k, v]) => `${k}: ${v}`).join(', ')}>
                     <CategoryBadge category={s.category} />
                     <span className={styles.scoreBar} aria-hidden><span className={styles.scoreFill} style={{ width: `${s.score}%` }} /></span>
-                    <span className="mono">{s.score}</span>
+                    <span>{s.score}</span>
                   </div>
-                  <span className="mono" style={{ fontSize: 12, color: 'var(--text-muted)' }}>{s.chord.notesFromBass.join(' ')}</span>
+                  <span className={styles.itemNotes}>{s.chord.notesFromBass.map(formatMusic).join(' ')}</span>
                   <ul className={styles.reasons}>
-                    {s.reasons.slice(0, 4).map((r) => <li key={r}>{r}</li>)}
+                    {s.reasons.slice(0, 4).map((r) => <li key={r}>{formatMusicProse(r)}</li>)}
                   </ul>
                 </li>
               ))}

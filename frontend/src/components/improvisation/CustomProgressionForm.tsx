@@ -51,7 +51,7 @@ export function CustomProgressionForm({ keyDto, onCreated }: { keyDto: KeyDto; o
       </label>
       <label className="field">
         <span className="field-label">Chords</span>
-        <input className="input mono" value={text} placeholder="Am F C G" autoComplete="off"
+        <input className="input score" value={text} placeholder="Am F C G" autoComplete="off"
                aria-invalid={error !== null} aria-describedby={error ? 'custom-error' : undefined}
                onChange={(e) => {
                  setText(e.target.value)

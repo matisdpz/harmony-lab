@@ -1,86 +1,203 @@
 .editor {
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 14px;
 }
 
-.toolbar { display: flex; align-items: center; gap: 12px; }
-.hint { margin-left: auto; font-size: 11px; color: var(--text-faint); display: flex; align-items: center; gap: 4px; flex-wrap: wrap; }
+.toolbar { display: flex; align-items: center; gap: 8px 16px; flex-wrap: wrap; min-height: 32px; }
+.hint { margin-left: auto; font-size: 12px; color: var(--ink-faint); display: flex; align-items: center; gap: 4px; flex-wrap: wrap; }
+
+.selection {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  padding-left: 14px;
+  border-left: 1px solid var(--rule);
+}
+.selectionName {
+  font-family: var(--font-score);
+  font-weight: 600;
+  font-size: 17px;
+  color: var(--blue);
+  margin-right: 6px;
+}
+
+/* ---- the lead-sheet line ---------------------------------------------------------------------- */
+.scroller { overflow-x: auto; padding: 4px 2px 6px; }
 
 .strip {
+  --staff-top: 52px;   /* where the staff starts inside a measure */
+  --staff-height: 33px; /* five lines, 8px apart */
   list-style: none;
   margin: 0;
-  padding: 2px 2px 8px;
+  padding: 0;
   display: flex;
-  gap: 8px;
-  overflow-x: auto;
-  scroll-snap-type: x proximity;
+  min-width: max-content;
 }
 
-.slot { position: relative; scroll-snap-align: start; flex-shrink: 0; }
+.slot { position: relative; flex: 0 0 auto; }
 .dropBefore::before {
   content: '';
   position: absolute;
-  left: -5px;
-  top: 4px;
-  bottom: 4px;
-  width: 2px;
-  border-radius: 2px;
-  background: var(--accent);
+  left: -2px;
+  top: 0;
+  bottom: 0;
+  width: 3px;
+  background: var(--blue);
+  z-index: 3;
 }
-@media (max-width: 700px) {
-  .hint { display: none; }
-  .toolbar { justify-content: space-between; }
-}
+.endDrop { position: relative; width: 28px; flex-shrink: 0; }
 
-.endDrop { position: relative; width: 24px; flex-shrink: 0; }
-
-.card {
-  width: 128px;
-  border-radius: var(--radius-lg);
-  background: var(--surface-2);
-  border: 1px solid var(--border);
-  transition: border-color 120ms, background 120ms, transform 120ms;
+.measure {
+  position: relative;
+  width: calc(var(--beats) * 2.75rem + 1.75rem);
+  min-width: max-content;
 }
-.card:hover { border-color: var(--border-strong); }
-.selected { border-color: var(--accent); background: #22201b; }
-.playing { box-shadow: 0 0 0 2px var(--tone); }
 
 .select {
   position: relative;
   width: 100%;
-  display: grid;
-  grid-template-columns: 1fr auto;
-  grid-template-areas:
-    'index beats'
-    'symbol symbol'
-    'roman roman'
-    'notes notes';
-  gap: 2px;
-  padding: 10px 12px 12px;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  padding: 18px 0 10px;
   text-align: left;
-  border-radius: var(--radius-lg);
+}
+.select:hover { background: var(--paper-sunk); }
+.select:focus-visible { outline-offset: -2px; }
+
+/* Measure number, as engraved above the first barline of a bar. */
+.number {
+  position: absolute;
+  top: 2px;
+  left: 6px;
+  font-family: var(--font-score);
+  font-style: italic;
+  font-size: 12px;
+  color: var(--ink-faint);
 }
 
-.index { grid-area: index; font-size: 11px; color: var(--text-faint); font-family: var(--font-mono); }
-.beats { grid-area: beats; font-size: 10px; color: var(--text-faint); }
-.symbol { grid-area: symbol; font-size: 22px; font-weight: 650; letter-spacing: -0.02em; margin-top: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.roman { grid-area: roman; font-family: var(--font-mono); font-size: 13px; color: var(--tone); min-height: 18px; }
-.chromatic { color: var(--accent); }
-.notes { grid-area: notes; font-size: 11px; color: var(--text-muted); font-family: var(--font-mono); }
+.symbol {
+  height: 34px;
+  padding: 0 14px;
+  font-family: var(--font-score);
+  font-size: 26px;
+  font-weight: 600;
+  font-variation-settings: 'opsz' 36;
+  line-height: 34px;
+  margin-bottom: 8px;
+  white-space: nowrap;
+}
+
+/* Five staff lines with one slash per beat; the right edge is the barline. */
+.staff {
+  position: relative;
+  height: var(--staff-height);
+  margin-top: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-around;
+  padding: 0 10px;
+  background: repeating-linear-gradient(to bottom, var(--rule-strong) 0 1px, transparent 1px 8px);
+  border-right: 1px solid var(--ink);
+}
+.slot:first-child .staff { border-left: 1px solid var(--ink); }
+.slash {
+  width: 7px;
+  height: 15px;
+  background: var(--ink);
+  transform: skewX(-32deg);
+  border-radius: 1px;
+}
+
+/* Final barline (thin + thick), or an end-repeat sign when playback loops. */
+.slot:nth-last-child(2) .staff::after {
+  content: '';
+  position: absolute;
+  right: -1px;
+  top: 0;
+  height: calc(var(--staff-height) - 1px);
+  width: 8px;
+  border-left: 1px solid var(--ink);
+  border-right: 4px solid var(--ink);
+}
+.looping .slot:nth-last-child(2) .staff::before,
+.looping .slot:first-child .staff::before {
+  content: '';
+  position: absolute;
+  top: 8px;
+  width: 4px;
+  height: 17px;
+  background: radial-gradient(circle, var(--ink) 1.8px, transparent 2.2px) 0 0 / 4px 8.5px repeat-y;
+  background-position: 0 2px;
+}
+.looping .slot:nth-last-child(2) .staff::before { right: 12px; }
+.looping .slot:first-child .staff { border-left: 4px solid var(--ink); box-shadow: inset 3px 0 0 var(--paper), inset 4px 0 0 var(--ink); }
+.looping .slot:first-child .staff::before { left: 8px; }
+/* A single-chord loop uses the start sign only. */
+.looping .slot:first-child:nth-last-child(2) .staff::before { left: auto; right: 12px; }
+
+.beats {
+  position: absolute !important;
+  width: 1px; height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+.roman {
+  padding: 8px 14px 0;
+  min-height: 30px;
+  font-family: var(--font-score);
+  font-size: 18px;
+  font-weight: 500;
+  color: var(--ink);
+  white-space: nowrap;
+}
+.chromatic { color: var(--amber); font-style: italic; }
+.notes { padding: 0 14px; font-size: 12px; color: var(--ink-faint); white-space: nowrap; word-spacing: 3px; }
+
+.selected .select { background: var(--blue-wash); }
+.selected .symbol { color: var(--blue); }
+.selected .select::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 3px;
+  background: var(--blue);
+}
+
+/* Playhead: a blue line that crosses the sounding measure in real time. */
+.playing .select { background: var(--blue-wash); }
+.playhead {
+  position: absolute;
+  top: -10px;
+  bottom: -10px;
+  left: 0;
+  width: 2px;
+  background: var(--blue);
+  z-index: 2;
+  animation: sweep var(--duration) linear forwards;
+}
+@keyframes sweep {
+  from { left: 0; }
+  to { left: calc(100% - 2px); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .playhead { display: none; }
+}
 
 .pending {
   position: absolute;
   inset: 0;
   display: grid;
   place-items: center;
-  background: rgb(23 24 27 / 0.75);
-  border-radius: var(--radius-lg);
+  background: color-mix(in srgb, var(--paper) 80%, transparent);
 }
 
-.cardActions {
-  display: flex;
-  justify-content: space-between;
-  padding: 4px 6px 6px;
-  border-top: 1px solid var(--border);
+@media (max-width: 700px) {
+  .hint { display: none; }
+  .selection { padding-left: 0; border-left: none; }
 }

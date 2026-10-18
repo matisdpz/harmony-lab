@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
+import { formatMusic, formatMusicProse } from '../model/notes'
 import { Link } from 'react-router'
 import { Check, Play, Spline, Wand2 } from 'lucide-react'
 import type { OptimizeResponse, RankedVoicingView, VoiceLeadingResponse } from '../api/types'
@@ -89,7 +90,7 @@ export function VoiceLeadingPage() {
       <div className={vl.pairs} role="group" aria-label="Transition">
         {chords.slice(0, -1).map((c, i) => (
           <button key={c.id} type="button" className={vl.pair} aria-pressed={pair === i} onClick={() => setPair(i)}>
-            <span className="mono">{i + 1}→{i + 2}</span> {c.symbol} → {chords[i + 1].symbol}
+            <span>{i + 1}–{i + 2}</span> <strong>{formatMusic(c.symbol)} → {formatMusic(chords[i + 1].symbol)}</strong>
           </button>
         ))}
       </div>
@@ -97,7 +98,7 @@ export function VoiceLeadingPage() {
       <div className={styles.controlsRow}>
         <label className={vl.toggle}>
           <input type="checkbox" checked={allowInversions} onChange={(e) => setAllowInversions(e.target.checked)} />
-          Allow other inversions of {to?.symbol.split('/')[0]}
+          Allow other inversions of {formatMusic(to?.symbol.split('/')[0] ?? '')}
         </label>
         {loading && <Spinner label="Ranking voicings" />}
       </div>
@@ -105,17 +106,17 @@ export function VoiceLeadingPage() {
 
       {from && to && ranking && (
         <div className={styles.twoColumn}>
-          <section className={`panel ${styles.card}`} aria-label="Ranked voicings">
-            <h2 className={styles.cardTitle}>Ranked voicings of {to.symbol.split('/')[0]}</h2>
-            <p className={styles.dim}>Now: {to.voicingNotes.join(' ')} {currentMovement ? `(${currentMovement.totalMovement} semitones of movement)` : ''}</p>
+          <section className={styles.card} aria-label="Ranked voicings">
+            <h2 className={styles.cardTitle}>Ranked voicings of <span className="score">{formatMusic(to.symbol.split('/')[0])}</span></h2>
+            <p className={styles.dim}>Now: <span className="score">{to.voicingNotes.map(formatMusic).join(' ')}</span> {currentMovement ? `(${currentMovement.totalMovement} semitones of movement)` : ''}</p>
             <ol className={vl.ranking}>
               {ranking.candidates.map((c, i) => (
                 <li key={c.chord.voicing.join(',')}>
                   <button type="button" className={vl.candidate} aria-pressed={chosen === i} onClick={() => setChosen(i)}>
-                    <span className="mono">#{c.rank}</span>
-                    <strong>{c.chord.symbol}</strong>
-                    <span className="mono">{c.chord.voicingNotes.join(' ')}</span>
-                    <span className={vl.cost}>cost {c.voiceLeading.cost} · {c.voiceLeading.totalMovement} st</span>
+                    <span className={vl.rank}>{c.rank}.</span>
+                    <strong>{formatMusic(c.chord.symbol)}</strong>
+                    <span className={vl.notes}>{c.chord.voicingNotes.map(formatMusic).join(' ')}</span>
+                    <span className={vl.cost}>Cost {c.voiceLeading.cost}, {c.voiceLeading.totalMovement} semitones</span>
                   </button>
                 </li>
               ))}
@@ -124,9 +125,9 @@ export function VoiceLeadingPage() {
           </section>
 
           {candidate && (
-            <section className={`panel ${styles.card}`} aria-label="Selected candidate">
+            <section className={styles.card} aria-label="Selected candidate">
               <div className={styles.cardHeader}>
-                <h2 className={styles.cardTitle}>{from.symbol} → {candidate.chord.symbol}</h2>
+                <h2 className={`${styles.cardTitle} score`}>{formatMusic(from.symbol)} → {formatMusic(candidate.chord.symbol)}</h2>
                 <div className={styles.actions}>
                   <button type="button" className="btn btn-sm" onClick={() => void audio.playSequence(
                     [{ notes: from.voicing, beats: 2 }, { notes: candidate.chord.voicing, beats: 2 }], content.tempoBpm, { owner: 'vl-page' })}>
@@ -143,7 +144,7 @@ export function VoiceLeadingPage() {
                 </div>
               </div>
               <MotionDiagram motions={candidate.voiceLeading.motions} />
-              <ul className={vl.reasons}>{candidate.reasons.map((r) => <li key={r}>{r}</li>)}</ul>
+              <ul className={vl.reasons}>{candidate.reasons.map((r) => <li key={r}>{formatMusicProse(r)}</li>)}</ul>
             </section>
           )}
         </div>
@@ -162,11 +163,11 @@ export function VoiceLeadingPage() {
         {optimized && (
           <>
             <p className={styles.lead}>
-              Total movement: <strong className="mono">{optimized.totalMovement}</strong> semitones
-              {workspace.analysis.data ? <> (currently <span className="mono">{workspace.analysis.data.metrics.totalVoiceMovement}</span>)</> : null}.
+              Total movement: <strong>{optimized.totalMovement}</strong> semitones
+              {workspace.analysis.data ? <> (currently {workspace.analysis.data.metrics.totalVoiceMovement})</> : null}.
             </p>
             <ol className={vl.optimized}>
-              {optimized.chords.map((c, i) => <li key={i}><strong>{c.symbol}</strong><span className="mono">{c.voicingNotes.join(' ')}</span></li>)}
+              {optimized.chords.map((c, i) => <li key={i}><strong>{formatMusic(c.symbol)}</strong><span>{c.voicingNotes.map(formatMusic).join(' ')}</span></li>)}
             </ol>
             <div className={styles.actions}>
               <button type="button" className="btn btn-sm" onClick={() => void audio.playSequence(

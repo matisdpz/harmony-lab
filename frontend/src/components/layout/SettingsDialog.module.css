@@ -2,7 +2,7 @@
   position: fixed;
   inset: 0;
   z-index: 40;
-  background: rgb(0 0 0 / 0.5);
+  background: var(--veil);
   display: grid;
   place-items: center;
   padding: 16px;
@@ -10,9 +10,9 @@
 
 .dialog {
   width: min(460px, 100%);
-  background: var(--surface-2);
-  border: 1px solid var(--border-strong);
-  border-radius: var(--radius-lg);
+  background: var(--paper);
+  border: 1px solid var(--ink);
+  border-radius: var(--radius);
   box-shadow: var(--shadow);
 }
 
@@ -21,9 +21,9 @@
   align-items: center;
   justify-content: space-between;
   padding: 14px 16px;
-  border-bottom: 1px solid var(--border);
+  border-bottom: 1px solid var(--rule);
 }
-.header h2 { font-size: 15px; font-weight: 600; }
+.header h2 { font-size: 17px; font-weight: 700; }
 
 .section {
   padding: 16px;
@@ -31,9 +31,9 @@
   flex-direction: column;
   gap: 12px;
 }
-.section + .section { border-top: 1px solid var(--border); }
+.section + .section { border-top: 1px solid var(--rule); }
 
-.hint { font-size: 12px; color: var(--text-muted); line-height: 1.5; }
+.hint { font-size: 13px; color: var(--ink-muted); line-height: 1.5; }
 
 .row { display: flex; gap: 12px; }
 .row .field { flex: 1; }

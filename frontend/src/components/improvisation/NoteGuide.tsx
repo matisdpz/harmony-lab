@@ -1,4 +1,5 @@
 import type { GuideNoteView, GuideRole } from '../../api/types'
+import { formatMusic, formatMusicProse } from '../../model/notes'
 import styles from './Improvisation.module.css'
 
 const GROUPS: { title: string; roles: GuideRole[]; className: string; hint: string }[] = [
@@ -20,8 +21,8 @@ export function NoteGuide({ guide }: { guide: GuideNoteView[] }) {
             <ul>
               {notes.map((n) => (
                 <li key={n.pitchClass}>
-                  <span className={`mono ${styles.noteName}`}>{n.note}</span>
-                  <span>{n.reason}</span>
+                  <span className={styles.noteName}>{formatMusic(n.note)}</span>
+                  <span>{formatMusicProse(n.reason)}</span>
                 </li>
               ))}
               {notes.length === 0 && <li className={styles.hint}>None for this chord.</li>}

@@ -1,4 +1,5 @@
 import { useState, type FormEvent } from 'react'
+import { formatMusic } from '../model/notes'
 import { Copy, FolderOpen, Pencil, Plus, Trash2 } from 'lucide-react'
 import { projectsApi } from '../api/projects'
 import { ApiError, errorMessage } from '../api/http'
@@ -110,7 +111,7 @@ function ProjectRow({ project, onOpen }: { project: ProjectSummary; onOpen: () =
   }
 
   return (
-    <li className={`panel ${own.row} ${isOpen ? own.open : ''}`} aria-busy={busy}>
+    <li className={`${own.row} ${isOpen ? own.open : ''}`} aria-busy={busy}>
       <div className={own.info}>
         {renaming ? (
           <form onSubmit={(e) => void rename(e)} className={own.renameForm} noValidate>
@@ -126,9 +127,9 @@ function ProjectRow({ project, onOpen }: { project: ProjectSummary; onOpen: () =
           <h2 className={own.name}>{project.name}{isOpen && <span className="badge badge-tone">open</span>}</h2>
         )}
         <p className={own.meta}>
-          {project.keyLabel} · {project.tempoBpm} BPM · {project.chordCount} chord{project.chordCount === 1 ? '' : 's'} · updated {dateFormat.format(new Date(project.updatedAt))}
+          {formatMusic(project.keyLabel)}, {project.tempoBpm} BPM, {project.chordCount} chord{project.chordCount === 1 ? '' : 's'}. Updated {dateFormat.format(new Date(project.updatedAt))}
         </p>
-        {project.preview.length > 0 && <p className={`mono ${own.preview}`}>{project.preview.join('  ')}{project.chordCount > project.preview.length ? '  …' : ''}</p>}
+        {project.preview.length > 0 && <p className={own.preview}>{project.preview.map(formatMusic).join('  ')}{project.chordCount > project.preview.length ? '  …' : ''}</p>}
       </div>
       <div className={own.actions}>
         <button type="button" className="btn btn-sm" onClick={onOpen} disabled={busy}><FolderOpen size={13} aria-hidden /> Open</button>

@@ -22,3 +22,30 @@ export function shiftNoteOctave(note: string, octaves: number): string {
 export function stripOctave(note: string): string {
   return note.replace(/-?\d+$/, '')
 }
+
+// Display only: the API and inputs keep ASCII spelling ("Eb", "F#m7b5"); the UI shows real accidentals.
+const ACCIDENTALS: Record<string, string> = { bb: '𝄫', b: '♭', '##': '𝄪', '#': '♯' }
+
+/** Chord symbols, note names and Roman numerals: "F#m7b5" → "F♯m7♭5", "bVII" → "♭VII". */
+export function formatMusic(text: string): string {
+  return text
+    .replace(/([A-G])(bb|##|b|#)/g, (_, letter: string, acc: string) => letter + ACCIDENTALS[acc])
+    .replace(/(^|[^A-Za-z])b(?=[IViv])/g, '$1♭')
+    .replace(/#(?=[IViv])/g, '♯')
+    .replace(/b(?=\d)/g, '♭')
+    .replace(/#(?=\d)/g, '♯')
+}
+
+/**
+ * Running text: converts accidentals in note names, chord symbols ("F#m7b5", "Ebmaj7") and numerals
+ * ("#viø7"), but never inside ordinary words ("Absent", "About").
+ */
+export function formatMusicProse(text: string): string {
+  return text.replace(/(^|[^A-Za-z])([A-G](?:bb|##|b|#)?|[#b](?=[IViv\d]))([^\s,.;:)]*)/g,
+    (match, before: string, head: string, rest: string) => {
+      const token = head + rest
+      // A chord symbol, note or numeral: letter + optional accidental, then only chord-suffix characters.
+      const symbol = /^(?:[A-G](?:bb|##|b|#)?|[#b])(?:m|maj|min|dim|aug|sus|add|ø|°|[IViv]+|[\d#b+/()A-G-])*$/
+      return symbol.test(token) && /[#b]/.test(token) ? before + formatMusic(token) : match
+    })
+}

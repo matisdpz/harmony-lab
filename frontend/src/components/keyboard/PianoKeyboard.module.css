@@ -1,91 +1,101 @@
+/* A flat, engraved keyboard: ivory and ink, with the chord drawn in the same blue as the score.
+   Every role also has a shape, so colour is never the only cue:
+   root = a notehead mark, tension = a red bar, safe note = a small dot. */
 .keyboard {
   position: relative;
-  height: 132px;
+  height: 148px;
   width: 100%;
   user-select: none;
-  border-radius: 0 0 var(--radius) var(--radius);
-  background: #0b0b0c;
-  padding-top: 4px;
+  background: var(--kb-frame);
+  border-top: 4px solid var(--kb-frame);
   touch-action: manipulation;
 }
 
 .key {
   position: absolute;
-  top: 4px;
+  top: 0;
   display: flex;
   align-items: flex-end;
   justify-content: center;
-  padding-bottom: 6px;
+  padding-bottom: 8px;
   transition: background 90ms, transform 90ms;
 }
 
 .white {
-  height: calc(100% - 4px);
-  background: linear-gradient(#e9e7e1, #d9d6ce);
-  border: 1px solid #0b0b0c;
-  border-top: none;
-  border-radius: 0 0 4px 4px;
+  height: 100%;
+  background: var(--kb-ivory);
+  border-right: 1px solid var(--kb-ebony);
+  border-radius: 0 0 3px 3px;
   z-index: 1;
 }
-.white:hover { background: linear-gradient(#f3f1ec, #e2dfd8); }
+.white:hover { background: var(--kb-ivory-hover); }
 
 .black {
-  height: 60%;
-  background: linear-gradient(#2a2b2e, #151618);
-  border: 1px solid #070708;
-  border-top: none;
-  border-radius: 0 0 3px 3px;
+  height: 62%;
+  background: var(--kb-ebony);
+  border-radius: 0 0 2px 2px;
   z-index: 2;
 }
-.black:hover { background: linear-gradient(#36383c, #1e1f22); }
+.black:hover { background: var(--kb-ebony-hover); }
 
 .label {
-  font-family: var(--font-mono);
-  font-size: 10px;
-  font-weight: 600;
+  font-family: var(--font-ui);
+  font-size: 11px;
+  font-weight: 700;
   pointer-events: none;
-  color: #6b6a66;
+  color: var(--kb-label);
 }
-.black .label { color: #b9b7b1; }
+.black .label { color: var(--kb-label-on-ebony); }
 
-/* chord tones: teal; root: amber. Colour plus a marker bar so the role is not conveyed by colour alone. */
-.white.tone { background: linear-gradient(#bfe3da, #8fcabd); }
-.white.root { background: linear-gradient(#f4d39b, #e3a94b); }
-.black.tone { background: linear-gradient(#5aa999, #3c7f72); }
-.black.root { background: linear-gradient(#e6b15b, #b37f2a); }
-.tone .label, .root .label { color: #121314; }
-.black.tone .label, .black.root .label { color: #0f1011; }
+.white.tone { background: var(--kb-tone); }
+.black.tone { background: var(--kb-tone-ebony); }
+.tone .label { color: var(--kb-label-dark); }
+.black.tone .label { color: var(--kb-ivory-hover); }
+
+.root { background: var(--kb-root) !important; }
+.root .label { color: var(--kb-ivory-hover); }
 .root::after {
   content: '';
   position: absolute;
-  top: 6px;
+  top: 10px;
+  left: 50%;
+  width: 10px;
+  height: 7px;
+  margin-left: -5px;
+  border-radius: 50%;
+  background: var(--kb-ivory-hover);
+  transform: rotate(-22deg);
+}
+
+.sounding { transform: translateY(1px); }
+.white.sounding:not(.tone):not(.root):not(.tension) { background: var(--kb-ivory-pressed); }
+.sounding.tone, .sounding.root { filter: brightness(1.08); }
+
+/* Improvisation guide. Safe notes get only a dot, so the chord and its tensions stand out while playing. */
+.scale::after {
+  content: '';
+  position: absolute;
+  bottom: 26px;
   left: 50%;
   width: 6px;
   height: 6px;
   margin-left: -3px;
   border-radius: 50%;
-  background: #1b1408;
+  background: var(--kb-safe-dot);
 }
+.black.scale::after { background: var(--kb-safe-dot-ebony); }
 
-.sounding { transform: translateY(2px); filter: brightness(1.12); }
-.white.sounding:not(.tone):not(.root) { background: linear-gradient(#d7d3c8, #c7c2b5); }
-
-/* improvisation guide: safe scale notes (pale blue) and tension notes (red, with a marker bar) */
-.white.scale { background: linear-gradient(#e3e8f7, #c5cfee); }
-.black.scale { background: linear-gradient(#5a6488, #3c4466); }
-.white.tension { background: linear-gradient(#f6c4bf, #e8857d); }
-.black.tension { background: linear-gradient(#c8564e, #8f2f29); }
-.scale .label { color: #2b3350; }
-.black.scale .label, .black.tension .label { color: #f3f1ec; }
-.tension .label { color: #4a1410; }
-.tension::after {
+.white.tension { background: var(--kb-ivory); }
+.black.tension { background: var(--kb-tension); }
+.tension .label { color: var(--kb-tension-label); }
+.black.tension .label { color: var(--kb-ivory-hover); }
+.tension::before {
   content: '';
   position: absolute;
-  top: 4px;
-  left: 20%;
-  right: 20%;
-  height: 3px;
-  border-radius: 2px;
-  background: #9b231b;
+  left: 3px;
+  right: 3px;
+  bottom: 0;
+  height: 5px;
+  background: var(--kb-tension);
 }
-.black.tension::after { background: #ffd2cd; }
+.black.tension::before { background: var(--kb-ivory-hover); height: 3px; bottom: 4px; left: 25%; right: 25%; }

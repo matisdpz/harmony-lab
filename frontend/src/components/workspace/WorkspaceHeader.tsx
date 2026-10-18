@@ -6,6 +6,7 @@ import { useCatalog } from '../../state/CatalogProvider'
 import { useSettings } from '../../state/SettingsProvider'
 import { useAudio } from '../../audio/AudioProvider'
 import { MAX_TEMPO, MIN_TEMPO } from '../../model/workspace'
+import { formatMusic } from '../../model/notes'
 import { Spinner } from '../common/Status'
 import styles from './WorkspaceHeader.module.css'
 
@@ -76,7 +77,7 @@ export function WorkspaceHeader({ onTogglePlay }: { onTogglePlay: () => void }) 
                   aria-label="Redo" title="Redo (Ctrl+Shift+Z)">
             <Redo2 size={16} />
           </button>
-          <button type="button" className="btn btn-primary" onClick={() => void workspace.save()}
+          <button type="button" className="btn" onClick={() => void workspace.save()}
                   disabled={workspace.saving || (!dirty && state.projectId !== null)} title="Save (Ctrl+S)">
             {workspace.saving ? <Spinner label="Saving" /> : <><Save size={15} aria-hidden /> Save</>}
           </button>
@@ -100,7 +101,7 @@ export function WorkspaceHeader({ onTogglePlay }: { onTogglePlay: () => void }) 
             <span className="field-label">Key</span>
             <select className="select" value={content.key.tonic} aria-label="Key tonic"
                     onChange={(e) => workspace.setKey({ ...content.key, tonic: e.target.value })}>
-              {catalog.keyTonics[content.key.mode].map((t) => <option key={t} value={t}>{t}</option>)}
+              {catalog.keyTonics[content.key.mode].map((t) => <option key={t} value={t}>{formatMusic(t)}</option>)}
             </select>
           </label>
           <div className="field">
@@ -112,7 +113,7 @@ export function WorkspaceHeader({ onTogglePlay }: { onTogglePlay: () => void }) 
           </div>
           <label className="field">
             <span className="field-label">Tempo (BPM)</span>
-            <input className={`input mono ${styles.tempo}`} inputMode="numeric" value={tempoText}
+            <input className={`input ${styles.tempo}`} inputMode="numeric" value={tempoText}
                    aria-invalid={tempoError !== null} aria-describedby={tempoError ? 'tempo-error' : undefined}
                    onChange={(e) => onTempoChange(e.target.value)}
                    onBlur={() => tempoError && setDraft({ tempo: content.tempoBpm, text: String(content.tempoBpm) })} />
@@ -120,7 +121,7 @@ export function WorkspaceHeader({ onTogglePlay }: { onTogglePlay: () => void }) 
         </div>
 
         <div className={styles.transport}>
-          <button type="button" className={`btn ${playing ? '' : 'btn-primary'}`} onClick={onTogglePlay}
+          <button type="button" className={`btn btn-primary ${styles.play}`} onClick={onTogglePlay}
                   disabled={content.chords.length === 0} title="Play / stop (Space)">
             {playing ? <><Square size={14} aria-hidden /> Stop</> : <><Play size={14} aria-hidden /> Play</>}
           </button>
@@ -128,9 +129,9 @@ export function WorkspaceHeader({ onTogglePlay }: { onTogglePlay: () => void }) 
                   onClick={() => settings.update({ loop: !settings.loop })} aria-label="Loop playback" title="Loop">
             <Repeat size={15} className={settings.loop ? styles.on : undefined} />
           </button>
-          <span className={`mono ${styles.position}`} aria-live="off">
+          <span className={styles.position} aria-live="off">
             {playing && audio.playingIndex !== null
-              ? <><Pause size={12} aria-hidden className={styles.on} /> {audio.playingIndex + 1} / {content.chords.length}</>
+              ? <><Pause size={12} aria-hidden className={styles.on} /> Chord {audio.playingIndex + 1} of {content.chords.length}</>
               : `${content.chords.length} chord${content.chords.length === 1 ? '' : 's'}`}
           </span>
         </div>

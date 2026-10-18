@@ -1,6 +1,6 @@
 import { useEffect, useRef } from 'react'
 import { X } from 'lucide-react'
-import { useSettings, type LabelMode } from '../../state/SettingsProvider'
+import { useSettings, type LabelMode, type Theme } from '../../state/SettingsProvider'
 import { useWorkspace } from '../../state/WorkspaceProvider'
 import { useAudio } from '../../audio/AudioProvider'
 import { midiName } from '../../model/notes'
@@ -10,6 +10,12 @@ const LABEL_MODES: { id: LabelMode; label: string }[] = [
   { id: 'chord', label: 'Chord notes + C' },
   { id: 'all', label: 'All keys' },
   { id: 'none', label: 'None' },
+]
+
+const THEMES: { id: Theme; label: string }[] = [
+  { id: 'auto', label: 'Match system' },
+  { id: 'light', label: 'Day' },
+  { id: 'dark', label: 'Night' },
 ]
 
 const REGISTER_LOWS = [33, 36, 40, 43, 45, 48, 52, 55]
@@ -41,6 +47,17 @@ export function SettingsDialog({ onClose }: { onClose: () => void }) {
 
         <section className={styles.section}>
           <h3 className="panel-title">Display (this browser)</h3>
+          <div className="field">
+            <span className="field-label">Theme</span>
+            <div className="segmented" role="group" aria-label="Theme">
+              {THEMES.map((theme) => (
+                <button key={theme.id} type="button" aria-pressed={settings.theme === theme.id}
+                        onClick={() => settings.update({ theme: theme.id })}>
+                  {theme.label}
+                </button>
+              ))}
+            </div>
+          </div>
           <div className="field">
             <span className="field-label">Keyboard labels</span>
             <div className="segmented" role="group" aria-label="Keyboard labels">
